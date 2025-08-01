@@ -13,7 +13,7 @@ export interface User {
 
 export interface AuthContextType {
   user: User | null;
-  login: (username: string, pass: string) => Promise<void>;
+  login: (email: string, pass: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -22,12 +22,6 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 const auth = getAuth(app);
 
-// Hardcoded master user credentials
-const MASTER_USER = 'admin';
-const MASTER_PASS = 'Id14304++';
-const ADMIN_EMAIL = 'carboo12@gmail.com';
-const ADMIN_UID = 'admin-user';
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,12 +29,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
-      // If a local admin session is already active, don't overwrite it.
-      if (user?.uid === ADMIN_UID) {
-        setIsLoading(false);
-        return;
-      }
-      
       if (firebaseUser) {
         setUser({ email: firebaseUser.email, uid: firebaseUser.uid });
       } else {
@@ -50,18 +38,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, []); // Removed `user` from dependencies to prevent re-renders
+  }, []);
 
-  const login = useCallback(async (username: string, pass: string) => {
+  const login = useCallback(async (email: string, pass: string) => {
     setIsLoading(true);
-    if (username === MASTER_USER && pass === MASTER_PASS) {
-      setUser({ email: ADMIN_EMAIL, uid: ADMIN_UID });
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const email = `${username.toLowerCase()}@example.com`;
       await signInWithEmailAndPassword(auth, email, pass);
     } catch (error) {
       console.error("Firebase login error:", error);
@@ -71,13 +52,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    setUser(null);
     try {
       await signOut(auth);
+      setUser(null);
+      router.push('/login');
     } catch (error) {
       console.error("Firebase logout error:", error);
     }
-    router.push('/login');
   }, [router]);
 
   return (
