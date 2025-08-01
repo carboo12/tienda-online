@@ -11,9 +11,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import app from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { addDoc, collection, getFirestore, onSnapshot, query, Timestamp } from 'firebase/firestore';
 import { CalendarIcon, Loader2, PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -28,6 +28,17 @@ interface Store {
   licenseExpires: Date;
 }
 
+// Re-initialize app and Firestore here to ensure context is correct
+// This is safe because getApps()/getApp() prevents re-initialization
+const firebaseConfig = {
+  "projectId": "multishop-manager-3x6vw",
+  "appId": "1:900084459529:web:bada387e4da3d34007b0d8",
+  "storageBucket": "multishop-manager-3x6vw.firebasestorage.app",
+  "apiKey": "AIzaSyCOSWahgg7ldlIj1kTaYJy6jFnwmVThwUE",
+  "authDomain": "multishop-manager-3x6vw.firebaseapp.com",
+  "messagingSenderId": "900084459529"
+};
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 
 export default function StoresPage() {

@@ -3,8 +3,23 @@
 
 import { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, User as FirebaseUser, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import app from '@/lib/firebase';
+
+// Centralized Firebase Configuration
+const firebaseConfig = {
+  "projectId": "multishop-manager-3x6vw",
+  "appId": "1:900084459529:web:bada387e4da3d34007b0d8",
+  "storageBucket": "multishop-manager-3x6vw.firebasestorage.app",
+  "apiKey": "AIzaSyCOSWahgg7ldlIj1kTaYJy6jFnwmVThwUE",
+  "authDomain": "multishop-manager-3x6vw.firebaseapp.com",
+  "messagingSenderId": "900084459529"
+};
+
+// Centralized Firebase Initialization
+const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
 
 export interface User {
   email: string | null;
@@ -17,12 +32,10 @@ export interface AuthContextType {
   loginWithGoogle: () => Promise<void>;
   logout: () => void;
   isLoading: boolean;
+  app: FirebaseApp; // Expose app instance if needed by other parts
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
-
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -75,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [router]);
 
   return (
-    <AuthContext.Provider value={{ user, login, loginWithGoogle, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, loginWithGoogle, logout, isLoading, app }}>
       {children}
     </AuthContext.Provider>
   );
