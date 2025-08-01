@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
     } else {
-      throw new Error('Invalid username or password');
+      throw new Error('Usuario o contraseña inválidos');
     }
   }, []);
 

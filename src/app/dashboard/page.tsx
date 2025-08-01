@@ -5,19 +5,19 @@ import { DollarSign, Package, Users, ShoppingCart } from 'lucide-react';
 
 export default function DashboardPage() {
   const stats = [
-    { title: 'Total Revenue', value: '$45,231.89', change: '+20.1% from last month', icon: DollarSign },
-    { title: 'Inventory', value: '12,832 items', change: '+2.1% from last month', icon: Package },
-    { title: 'Active Orders', value: '573', change: '+19 from last hour', icon: ShoppingCart },
-    { title: 'New Customers', value: '+2350', change: '+180.1% from last month', icon: Users },
+    { title: 'Ingresos Totales', value: '$45,231.89', change: '+20.1% desde el mes pasado', icon: DollarSign },
+    { title: 'Inventario', value: '12,832 artículos', change: '+2.1% desde el mes pasado', icon: Package },
+    { title: 'Pedidos Activos', value: '573', change: '+19 desde la última hora', icon: ShoppingCart },
+    { title: 'Nuevos Clientes', value: '+2350', change: '+180.1% desde el mes pasado', icon: Users },
   ];
 
   return (
     <AppShell>
       <div className="flex flex-col gap-4">
         <header>
-          <h1 className="text-3xl font-bold tracking-tight font-headline">Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight font-headline">Panel de Control</h1>
           <p className="text-muted-foreground">
-            An overview of your business operations.
+            Un resumen de las operaciones de tu negocio.
           </p>
         </header>
 
@@ -39,23 +39,23 @@ export default function DashboardPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             <Card className="col-span-4">
                 <CardHeader>
-                    <CardTitle>Recent Sales</CardTitle>
+                    <CardTitle>Ventas Recientes</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-muted-foreground">Chart of recent sales will be displayed here.</p>
+                    <p className="text-muted-foreground">El gráfico de ventas recientes se mostrará aquí.</p>
                     <div className="h-64 bg-muted/50 rounded-md mt-4 flex items-center justify-center">
-                        [Sales Chart]
+                        [Gráfico de Ventas]
                     </div>
                 </CardContent>
             </Card>
             <Card className="col-span-3">
                 <CardHeader>
-                    <CardTitle>Recent Orders</CardTitle>
+                    <CardTitle>Pedidos Recientes</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-muted-foreground">A list of recent orders will appear here.</p>
+                    <p className="text-muted-foreground">Aquí aparecerá una lista de los pedidos recientes.</p>
                      <div className="h-64 bg-muted/50 rounded-md mt-4 flex items-center justify-center">
-                        [Order List]
+                        [Lista de Pedidos]
                     </div>
                 </CardContent>
             </Card>

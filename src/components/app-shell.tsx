@@ -28,12 +28,12 @@ interface AppShellProps {
 }
 
 const navItems = [
-  { href: '/dashboard', icon: Home, label: 'Dashboard' },
-  { href: '/invoices', icon: FileText, label: 'Invoicing' },
-  { href: '/inventory', icon: Box, label: 'Inventory' },
-  { href: '/orders', icon: Package, label: 'Orders' },
-  { href: '/reports', icon: BarChart, label: 'AI Reports' },
-  { href: '/log', icon: ClipboardList, label: 'Action Log', adminOnly: true },
+  { href: '/dashboard', icon: Home, label: 'Panel de Control' },
+  { href: '/invoices', icon: FileText, label: 'Facturación' },
+  { href: '/inventory', icon: Box, label: 'Inventario' },
+  { href: '/orders', icon: Package, label: 'Pedidos' },
+  { href: '/reports', icon: BarChart, label: 'Informes IA' },
+  { href: '/log', icon: ClipboardList, label: 'Registro de Acciones', adminOnly: true },
 ];
 
 export function AppShell({ children }: AppShellProps) {
@@ -87,7 +87,7 @@ export function AppShell({ children }: AppShellProps) {
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
               <ShoppingBasket className="h-6 w-6 text-primary" />
-              <span className="">MultiShop</span>
+              <span className="">MultiTienda</span>
             </Link>
           </div>
           <div className="flex-1 overflow-auto py-2">
@@ -101,14 +101,14 @@ export function AppShell({ children }: AppShellProps) {
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="shrink-0 md:hidden">
                 <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle navigation menu</span>
+                <span className="sr-only">Alternar menú de navegación</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col p-0">
                <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
                 <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
                   <ShoppingBasket className="h-6 w-6 text-primary" />
-                  <span className="">MultiShop</span>
+                  <span className="">MultiTienda</span>
                 </Link>
               </div>
               {renderNavLinks(true)}

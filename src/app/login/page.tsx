@@ -40,14 +40,14 @@ export default function LoginPage() {
       await login(username, password);
       router.push('/dashboard');
       toast({
-        title: "Login Successful",
-        description: `Welcome back, ${username}!`,
+        title: "Inicio de Sesión Exitoso",
+        description: `¡Bienvenido de nuevo, ${username}!`,
       });
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Login Failed",
-        description: error instanceof Error ? error.message : "An unknown error occurred.",
+        title: "Error de Inicio de Sesión",
+        description: error instanceof Error ? 'Usuario o contraseña inválidos.' : "Ocurrió un error desconocido.",
       });
     } finally {
       setIsSubmitting(false);
@@ -69,19 +69,19 @@ export default function LoginPage() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
             <ShoppingBasket className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold">MultiShop Manager</CardTitle>
+          <CardTitle className="text-2xl font-bold">Administrador MultiTienda</CardTitle>
           <CardDescription>
-            Enter your credentials to access your dashboard.
+            Ingresa tus credenciales para acceder a tu panel.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">Usuario</Label>
               <Input
                 id="username"
                 type="text"
-                placeholder="Your username"
+                placeholder="Tu nombre de usuario"
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -89,13 +89,13 @@ export default function LoginPage() {
             </div>
             <div className="grid gap-2">
               <div className="flex items-center">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Contraseña</Label>
               </div>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Your password"
+                  placeholder="Tu contraseña"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -108,12 +108,12 @@ export default function LoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  <span className="sr-only">Toggle password visibility</span>
+                  <span className="sr-only">Alternar visibilidad de contraseña</span>
                 </Button>
               </div>
             </div>
             <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? 'Logging in...' : 'Login'}
+              {isSubmitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
             </Button>
           </form>
         </CardContent>

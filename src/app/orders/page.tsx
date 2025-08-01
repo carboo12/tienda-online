@@ -10,35 +10,35 @@ export default function OrdersPage() {
     <AppShell>
       <div className="flex items-center justify-between">
         <div>
-            <h1 className="text-3xl font-bold tracking-tight font-headline">Orders</h1>
-            <p className="text-muted-foreground">Track and manage customer orders.</p>
+            <h1 className="text-3xl font-bold tracking-tight font-headline">Pedidos</h1>
+            <p className="text-muted-foreground">Sigue y gestiona los pedidos de los clientes.</p>
         </div>
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Create Order
+          Crear Pedido
         </Button>
       </div>
 
        <Alert className="mt-4 bg-accent/30">
           <WifiOff className="h-4 w-4" />
-          <AlertTitle>Offline Mode Available</AlertTitle>
+          <AlertTitle>Modo sin conexión disponible</AlertTitle>
           <AlertDescription>
-            You can create new orders even without an internet connection. They will sync automatically when you're back online.
+            Puedes crear nuevos pedidos incluso sin conexión a internet. Se sincronizarán automáticamente cuando vuelvas a estar en línea.
           </AlertDescription>
         </Alert>
       
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Order List</CardTitle>
-          <CardDescription>A list of recent orders will be displayed here.</CardDescription>
+          <CardTitle>Lista de Pedidos</CardTitle>
+          <CardDescription>Aquí se mostrará una lista de los pedidos recientes.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-96 flex items-center justify-center border-2 border-dashed rounded-lg bg-muted/50">
-            <p className="text-muted-foreground">No orders to display.</p>
+            <p className="text-muted-foreground">No hay pedidos para mostrar.</p>
           </div>
         </CardContent>
         <CardFooter>
-            <p className="text-xs text-muted-foreground">This is where pagination would go.</p>
+            <p className="text-xs text-muted-foreground">Aquí iría la paginación.</p>
         </CardFooter>
       </Card>
     </AppShell>

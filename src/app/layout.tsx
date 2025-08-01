@@ -5,8 +5,8 @@ import { Providers } from '@/components/providers';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'MultiShop Manager',
-  description: 'Manage billing, inventory, and orders for multiple shops.',
+  title: 'Administrador MultiTienda',
+  description: 'Gestiona facturación, inventario y pedidos de múltiples tiendas.',
   manifest: '/manifest.json',
 };
 
@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="es" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

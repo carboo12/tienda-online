@@ -9,27 +9,27 @@ export default function InventoryPage() {
     <AppShell>
       <div className="flex items-center justify-between">
         <div>
-            <h1 className="text-3xl font-bold tracking-tight font-headline">Inventory</h1>
-            <p className="text-muted-foreground">Manage your products and stock levels.</p>
+            <h1 className="text-3xl font-bold tracking-tight font-headline">Inventario</h1>
+            <p className="text-muted-foreground">Gestiona tus productos y niveles de stock.</p>
         </div>
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Add Product
+          Añadir Producto
         </Button>
       </div>
       
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Product List</CardTitle>
-          <CardDescription>A list of your products will be displayed here.</CardDescription>
+          <CardTitle>Lista de Productos</CardTitle>
+          <CardDescription>Aquí se mostrará una lista de tus productos.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-96 flex items-center justify-center border-2 border-dashed rounded-lg bg-muted/50">
-            <p className="text-muted-foreground">No products in inventory.</p>
+            <p className="text-muted-foreground">No hay productos en el inventario.</p>
           </div>
         </CardContent>
         <CardFooter>
-            <p className="text-xs text-muted-foreground">This is where pagination would go.</p>
+            <p className="text-xs text-muted-foreground">Aquí iría la paginación.</p>
         </CardFooter>
       </Card>
     </AppShell>

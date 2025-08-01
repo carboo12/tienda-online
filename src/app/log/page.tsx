@@ -10,12 +10,12 @@ import { useEffect } from 'react';
 import { ShieldAlert } from 'lucide-react';
 
 const logData = [
-    { id: 1, user: 'user1@example.com', action: 'CREATE_INVOICE', details: 'Invoice #INV-0012 created for Customer A', timestamp: '2023-10-27 10:00:00', status: 'Success' },
-    { id: 2, user: 'user2@example.com', action: 'UPDATE_PRODUCT', details: 'Product SKU #PROD-554 updated quantity to 50', timestamp: '2023-10-27 10:05:12', status: 'Success' },
-    { id: 3, user: 'Admin', action: 'DELETE_USER', details: 'User account for user3@example.com deleted', timestamp: '2023-10-27 10:15:34', status: 'Warning' },
-    { id: 4, user: 'user1@example.com', action: 'CREATE_ORDER', details: 'Order #ORD-987 created', timestamp: '2023-10-27 11:20:05', status: 'Success' },
-    { id: 5, user: 'user2@example.com', action: 'LOGIN_ATTEMPT', details: 'Failed login attempt from IP 192.168.1.10', timestamp: '2023-10-27 11:30:15', status: 'Error' },
-    { id: 6, user: 'Admin', action: 'VIEW_REPORT', details: 'Viewed AI sales report for Q3', timestamp: '2023-10-27 12:00:00', status: 'Info' },
+    { id: 1, user: 'user1@example.com', action: 'CREATE_INVOICE', details: 'Factura #INV-0012 creada para Cliente A', timestamp: '2023-10-27 10:00:00', status: 'Éxito' },
+    { id: 2, user: 'user2@example.com', action: 'UPDATE_PRODUCT', details: 'Producto SKU #PROD-554 cantidad actualizada a 50', timestamp: '2023-10-27 10:05:12', status: 'Éxito' },
+    { id: 3, user: 'Admin', action: 'DELETE_USER', details: 'Cuenta de usuario para user3@example.com eliminada', timestamp: '2023-10-27 10:15:34', status: 'Advertencia' },
+    { id: 4, user: 'user1@example.com', action: 'CREATE_ORDER', details: 'Pedido #ORD-987 creado', timestamp: '2023-10-27 11:20:05', status: 'Éxito' },
+    { id: 5, user: 'user2@example.com', action: 'LOGIN_ATTEMPT', details: 'Intento de inicio de sesión fallido desde IP 192.168.1.10', timestamp: '2023-10-27 11:30:15', status: 'Error' },
+    { id: 6, user: 'Admin', action: 'VIEW_REPORT', details: 'Visto informe de ventas de IA para Q3', timestamp: '2023-10-27 12:00:00', status: 'Info' },
 ];
 
 export default function LogPage() {
@@ -29,32 +29,32 @@ export default function LogPage() {
   }, [user, isLoading, router]);
 
   if (isLoading || user?.username !== 'Admin') {
-    return <AppShell><div>Loading...</div></AppShell>;
+    return <AppShell><div>Cargando...</div></AppShell>;
   }
 
   return (
     <AppShell>
        <div>
-          <h1 className="text-3xl font-bold tracking-tight font-headline">Action Log</h1>
+          <h1 className="text-3xl font-bold tracking-tight font-headline">Registro de Acciones</h1>
           <p className="text-muted-foreground">
-            A log of all user actions within the system. For admin eyes only.
+            Un registro de todas las acciones de los usuarios en el sistema. Solo para ojos de administrador.
           </p>
         </div>
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>User Activity</CardTitle>
-          <CardDescription>All user actions are recorded here for auditing purposes.</CardDescription>
+          <CardTitle>Actividad de Usuario</CardTitle>
+          <CardDescription>Todas las acciones de los usuarios se registran aquí para fines de auditoría.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Action</TableHead>
-                <TableHead>Details</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Timestamp</TableHead>
+                <TableHead>Usuario</TableHead>
+                <TableHead>Acción</TableHead>
+                <TableHead>Detalles</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead className="text-right">Marca de Tiempo</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -66,9 +66,9 @@ export default function LogPage() {
                   <TableCell>
                     <Badge variant={
                       log.status === 'Error' ? 'destructive' :
-                      log.status === 'Warning' ? 'secondary' : 'default'
+                      log.status === 'Advertencia' ? 'secondary' : 'default'
                     }>
-                      {log.status}
+                      {log.status === 'Success' ? 'Éxito' : log.status}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">{log.timestamp}</TableCell>
