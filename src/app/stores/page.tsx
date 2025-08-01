@@ -46,18 +46,17 @@ export default function StoresPage() {
   const [licenseExpires, setLicenseExpires] = useState<Date>();
 
   useEffect(() => {
-    // Wait until auth state is determined
+    // This single effect handles both auth check and data fetching.
     if (isAuthLoading) {
-      return;
+      return; // Wait until auth state is determined.
     }
 
-    // If no user or not admin, redirect to dashboard.
     if (user?.email !== 'admin@example.com') {
       router.replace('/dashboard');
-      return;
+      return; // Redirect non-admins and prevent data fetching.
     }
-
-    // Now, we are sure user is admin, so we can fetch data.
+    
+    // Auth is confirmed, user is admin, proceed to fetch data.
     setIsDataLoading(true);
     const q = query(collection(db, 'stores'));
     const unsubscribe = onSnapshot(q, 
@@ -136,6 +135,8 @@ export default function StoresPage() {
     }
   };
 
+  // Auth might still be loading, or the user is not an admin yet.
+  // We show a loader to prevent flicker or showing content prematurely.
   if (isAuthLoading || user?.email !== 'admin@example.com') {
     return (
       <AppShell>
