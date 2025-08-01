@@ -19,7 +19,7 @@ const logData = [
 ];
 
 export default function LogPage() {
-  const { user, isLoading }.useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export default function LogPage() {
     }
   }, [user, isLoading, router]);
 
-  if (isLoading || user?.email !== 'admin@example.com') {
+  if (isLoading || !user || user.email !== 'admin@example.com') {
     return <AppShell><div>Cargando...</div></AppShell>;
   }
 
