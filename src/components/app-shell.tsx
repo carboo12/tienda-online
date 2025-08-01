@@ -59,7 +59,7 @@ export function AppShell({ children }: AppShellProps) {
   const renderNavLinks = (isMobile = false) => (
     <nav className={cn("flex flex-col gap-2", isMobile ? "p-4" : "p-2")}>
       {navItems.map((item) => {
-        if (item.adminOnly && user?.username !== 'Admin') {
+        if (item.adminOnly && user?.email !== 'admin@example.com') {
           return null;
         }
         return (

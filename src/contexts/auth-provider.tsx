@@ -3,19 +3,24 @@
 
 import { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, User as FirebaseUser } from 'firebase/auth';
+import app from '@/lib/firebase';
 
 export interface User {
-  username: string;
+  email: string | null;
+  uid: string;
 }
 
 export interface AuthContextType {
   user: User | null;
-  login: (username: string, pass: string) => Promise<void>;
+  login: (email: string, pass: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
+
+const auth = getAuth(app);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -23,33 +28,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        setUser({ email: firebaseUser.email, uid: firebaseUser.uid });
+      } else {
+        setUser(null);
       }
-    } catch (error) {
-      console.error("Failed to parse user from localStorage", error);
-    } finally {
       setIsLoading(false);
-    }
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const login = useCallback(async (username: string, pass:string) => {
-    // This is a mock login. In a real app, you'd call an API.
-    if ((username === 'Admin' && pass === 'Id14304++') || (username === 'User' && pass === 'Id14304++')) {
-      const userData = { username };
-      localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
-    } else {
+  const login = useCallback(async (email: string, pass:string) => {
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+    } catch (error) {
+      console.error("Firebase login error:", error);
       throw new Error('Usuario o contraseña inválidos');
     }
   }, []);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem('user');
-    setUser(null);
-    router.push('/login');
+  const logout = useCallback(async () => {
+    try {
+      await signOut(auth);
+      router.push('/login');
+    } catch (error) {
+      console.error("Firebase logout error:", error);
+    }
   }, [router]);
 
   return (
