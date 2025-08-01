@@ -22,6 +22,12 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 const auth = getAuth(app);
 
+// Hardcoded master user credentials
+const MASTER_USER = 'admin';
+const MASTER_PASS = 'Id14304++';
+const ADMIN_EMAIL = 'admin@example.com';
+const ADMIN_UID = 'admin-user';
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,6 +35,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+      // If a hardcoded admin session is active, don't overwrite it
+      if (user?.uid === ADMIN_UID) {
+        setIsLoading(false);
+        return;
+      }
+      
       if (firebaseUser) {
         setUser({ email: firebaseUser.email, uid: firebaseUser.uid });
       } else {
@@ -38,11 +50,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   const login = useCallback(async (username: string, pass: string) => {
+    if (username === MASTER_USER && pass === MASTER_PASS) {
+      // Handle master user login locally
+      setUser({ email: ADMIN_EMAIL, uid: ADMIN_UID });
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      // Always append @example.com to the username to create a valid email for Firebase
+      // For all other users, use Firebase Auth
       const email = `${username.toLowerCase()}@example.com`;
       await signInWithEmailAndPassword(auth, email, pass);
     } catch (error) {
@@ -52,13 +71,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    try {
-      await signOut(auth);
-      router.push('/login');
-    } catch (error) {
-      console.error("Firebase logout error:", error);
+    // If it was the hardcoded admin, just clear the state
+    if (user?.uid === ADMIN_UID) {
+      setUser(null);
+    } else {
+      try {
+        await signOut(auth);
+      } catch (error) {
+        console.error("Firebase logout error:", error);
+      }
     }
-  }, [router]);
+    router.push('/login');
+  }, [user, router]);
 
   return (
     <AuthContext.Provider value={{ user, login, logout, isLoading }}>
