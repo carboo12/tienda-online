@@ -10,11 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { getFirestore, collection, getDocs, onSnapshot, query, addDoc } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, onSnapshot, query, addDoc, doc, getDoc } from 'firebase/firestore';
 import { app } from '@/contexts/auth-provider';
 import { Loader2, PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent, useCallback } from 'react';
 
 interface Store {
   id: string;
@@ -55,49 +55,69 @@ export default function UsersPage() {
     }
 
     const fetchStores = async () => {
-      const q = query(collection(db, 'stores'));
-      const querySnapshot = await getDocs(q);
-      const storesData: Store[] = [];
-      querySnapshot.forEach((doc) => {
-        storesData.push({ id: doc.id, name: doc.data().name });
-      });
-      setStores(storesData);
+      try {
+        const q = query(collection(db, 'stores'));
+        const querySnapshot = await getDocs(q);
+        const storesData: Store[] = [];
+        querySnapshot.forEach((doc) => {
+          storesData.push({ id: doc.id, name: doc.data().name });
+        });
+        setStores(storesData);
+      } catch (error) {
+        console.error("Error fetching stores:", error);
+      }
     };
 
     fetchStores();
+  }, [user, isAuthLoading, router]);
+
+  useEffect(() => {
+    if (user?.name !== 'admin') return;
 
     const unsubscribe = onSnapshot(query(collection(db, 'users')), async (snapshot) => {
-        const usersData: User[] = [];
-        for (const doc of snapshot.docs) {
-            const data = doc.data();
-            let storeName = 'N/A';
-            if (data.storeId) {
-                const store = stores.find(s => s.id === data.storeId);
-                storeName = store ? store.name : 'Tienda no encontrada';
+      setIsDataLoading(true);
+      const usersData: User[] = [];
+      for (const userDoc of snapshot.docs) {
+          const data = userDoc.data();
+          let storeName = 'Sin Asignar (Demo)';
+
+          if (data.storeId) {
+            try {
+              const storeDocRef = doc(db, 'stores', data.storeId);
+              const storeDoc = await getDoc(storeDocRef);
+              if (storeDoc.exists()) {
+                storeName = storeDoc.data().name;
+              } else {
+                storeName = 'Tienda Eliminada';
+              }
+            } catch (error) {
+              console.error("Error fetching store name:", error);
+              storeName = 'Error al cargar';
             }
-             usersData.push({
-                id: doc.id,
-                name: data.name,
-                email: data.email,
-                role: data.role,
-                storeName: storeName
-            });
-        }
-        setUsers(usersData);
-        setIsDataLoading(false);
+          }
+           usersData.push({
+              id: userDoc.id,
+              name: data.name,
+              email: data.email,
+              role: data.role,
+              storeName: storeName
+          });
+      }
+      setUsers(usersData);
+      setIsDataLoading(false);
     });
 
     return () => unsubscribe();
-  }, [user, isAuthLoading, router, stores]);
+  }, [user]);
 
 
   const handleAddUser = async (e: FormEvent) => {
     e.preventDefault();
-    if (!name || !email || !password || !role || !storeId) {
+    if (!name || !email || !password || !role) {
         toast({
             variant: "destructive",
             title: "Campos Incompletos",
-            description: "Por favor, rellena todos los campos para añadir un usuario.",
+            description: "Por favor, rellena nombre, email, contraseña y rol.",
         });
         return;
     }
@@ -108,7 +128,7 @@ export default function UsersPage() {
         email,
         password, // Idealmente, esto debería estar hasheado.
         role,
-        storeId,
+        storeId: storeId || null, // Guarda el ID o null si no se selecciona
       });
 
       toast({
@@ -192,12 +212,13 @@ export default function UsersPage() {
                         </Select>
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="store">Tienda Asignada</Label>
-                         <Select value={storeId} onValueChange={setStoreId} required disabled={isSubmitting}>
+                        <Label htmlFor="store">Tienda Asignada (Opcional)</Label>
+                         <Select value={storeId} onValueChange={setStoreId} disabled={isSubmitting}>
                             <SelectTrigger id="store">
                                 <SelectValue placeholder="Selecciona una tienda" />
                             </SelectTrigger>
                             <SelectContent>
+                                <SelectItem value="">Sin Asignar (Demo)</SelectItem>
                                 {stores.map(store => (
                                     <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
                                 ))}

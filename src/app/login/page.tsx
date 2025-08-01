@@ -16,7 +16,7 @@ import { Eye, EyeOff, ShoppingBasket, Bot } from "lucide-react";
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, query, where, getDocs, DocumentData } from 'firebase/firestore';
 import { app } from '@/contexts/auth-provider';
 
 export default function LoginPage() {
@@ -38,48 +38,58 @@ export default function LoginPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    if (username.toLowerCase() === 'admin' && password === 'Id14304++') {
-        try {
-            const db = getFirestore(app);
-            const q = query(collection(db, "masteruser"), where("nombre", "==", username.toLowerCase()));
-            const querySnapshot = await getDocs(q);
 
-            if (querySnapshot.empty) {
-                throw new Error("Usuario no encontrado.");
-            }
+    try {
+        const db = getFirestore(app);
+        let userFound = false;
+        let userData: DocumentData | null = null;
 
-            let userFound = false;
-            querySnapshot.forEach((doc) => {
+        // 1. Check master user collection
+        const masterQuery = query(collection(db, "masteruser"), where("nombre", "==", username.toLowerCase()));
+        const masterSnapshot = await getDocs(masterQuery);
+        
+        if (!masterSnapshot.empty) {
+            masterSnapshot.forEach((doc) => {
                 if (doc.data().contraseña === password) {
-                    login({ name: doc.data().nombre });
-                    router.push('/dashboard');
                     userFound = true;
+                    userData = doc.data();
                 }
             });
-
-            if (!userFound) {
-                 throw new Error("Contraseña incorrecta.");
-            }
-
-        } catch (error) {
-            toast({
-                variant: "destructive",
-                title: "Error de Inicio de Sesión",
-                description: "Credenciales inválidas. Por favor, inténtalo de nuevo.",
-            });
-        } finally {
-            setIsSubmitting(false);
         }
-    } else {
-         toast({
+
+        // 2. If not found in master, check regular users collection
+        if (!userFound) {
+            const usersQuery = query(collection(db, "users"), where("email", "==", username));
+            const usersSnapshot = await getDocs(usersQuery);
+
+            if (!usersSnapshot.empty) {
+                usersSnapshot.forEach((doc) => {
+                    if (doc.data().password === password) {
+                        userFound = true;
+                        userData = doc.data();
+                    }
+                });
+            }
+        }
+
+        if (userFound && userData) {
+            login({ name: userData.name || userData.nombre });
+            router.push('/dashboard');
+        } else {
+            throw new Error("Credenciales inválidas.");
+        }
+
+    } catch (error: any) {
+        toast({
             variant: "destructive",
             title: "Error de Inicio de Sesión",
-            description: "Credenciales inválidas. Por favor, inténtalo de nuevo.",
+            description: error.message || "Credenciales inválidas. Por favor, inténtalo de nuevo.",
         });
+    } finally {
         setIsSubmitting(false);
     }
   };
+
 
   if (isLoading || user) {
      return (
@@ -104,11 +114,11 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="username">Usuario</Label>
+              <Label htmlFor="username">Usuario o Email</Label>
               <Input
                 id="username"
                 type="text"
-                placeholder="Ej: admin"
+                placeholder="Ej: admin o usuario@tienda.com"
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
