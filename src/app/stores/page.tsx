@@ -10,11 +10,12 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { CalendarIcon, PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 
 const mockStores = [
   { id: '1', name: 'Tienda A', owner: 'Ana García', phone: '123-456-7890', licenseExpires: new Date() },
@@ -24,13 +25,45 @@ const mockStores = [
 export default function StoresPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
-  const [date, setDate] = useState<Date>();
+  const { toast } = useToast();
+
+  // Form state
+  const [storeName, setStoreName] = useState('');
+  const [ownerName, setOwnerName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [licenseExpires, setLicenseExpires] = useState<Date>();
 
   useEffect(() => {
     if (!isLoading && user?.email !== 'admin@example.com') {
       router.replace('/dashboard');
     }
   }, [user, isLoading, router]);
+  
+  const handleAddStore = (e: FormEvent) => {
+    e.preventDefault();
+    const storeData = {
+        storeName,
+        ownerName,
+        phone,
+        email,
+        licenseExpires: licenseExpires ? format(licenseExpires, "PPP") : 'N/A'
+    };
+    
+    alert(`Tienda a añadir:\n${JSON.stringify(storeData, null, 2)}`);
+    
+    toast({
+        title: "Tienda Añadida (Simulación)",
+        description: `La tienda "${storeName}" se ha añadido. La conexión a la base de datos se implementará a continuación.`,
+    });
+
+    // Reset form
+    setStoreName('');
+    setOwnerName('');
+    setPhone('');
+    setEmail('');
+    setLicenseExpires(undefined);
+  };
 
   if (isLoading || !user || user.email !== 'admin@example.com') {
     return <AppShell><div>Cargando...</div></AppShell>;
@@ -55,52 +88,54 @@ export default function StoresPage() {
                   Completa el formulario para registrar una nueva tienda.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="storeName">Nombre de la Tienda</Label>
-                  <Input id="storeName" placeholder="Ej: Moda Exclusiva" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="ownerName">Nombre del Dueño/a</Label>
-                  <Input id="ownerName" placeholder="Ej: Carolina Herrera" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Teléfono</Label>
-                  <Input id="phone" type="tel" placeholder="Ej: 555-123-4567" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Correo Electrónico (Opcional)</Label>
-                  <Input id="email" type="email" placeholder="Ej: contacto@moda.com" />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="license">Vencimiento de Licencia</Label>
-                     <Popover>
-                        <PopoverTrigger asChild>
-                        <Button
-                            variant={"outline"}
-                            className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !date && "text-muted-foreground"
-                            )}
-                        >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {date ? format(date, "PPP") : <span>Selecciona una fecha</span>}
-                        </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                        <Calendar
-                            mode="single"
-                            selected={date}
-                            onSelect={setDate}
-                            initialFocus
-                        />
-                        </PopoverContent>
-                    </Popover>
-                </div>
-                <Button className="w-full">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Añadir Tienda
-                </Button>
+              <CardContent>
+                <form onSubmit={handleAddStore} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="storeName">Nombre de la Tienda</Label>
+                    <Input id="storeName" placeholder="Ej: Moda Exclusiva" value={storeName} onChange={(e) => setStoreName(e.target.value)} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ownerName">Nombre del Dueño/a</Label>
+                    <Input id="ownerName" placeholder="Ej: Carolina Herrera" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Teléfono</Label>
+                    <Input id="phone" type="tel" placeholder="Ej: 555-123-4567" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Correo Electrónico (Opcional)</Label>
+                    <Input id="email" type="email" placeholder="Ej: contacto@moda.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="license">Vencimiento de Licencia</Label>
+                       <Popover>
+                          <PopoverTrigger asChild>
+                          <Button
+                              variant={"outline"}
+                              className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !licenseExpires && "text-muted-foreground"
+                              )}
+                          >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {licenseExpires ? format(licenseExpires, "PPP") : <span>Selecciona una fecha</span>}
+                          </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                          <Calendar
+                              mode="single"
+                              selected={licenseExpires}
+                              onSelect={setLicenseExpires}
+                              initialFocus
+                          />
+                          </PopoverContent>
+                      </Popover>
+                  </div>
+                  <Button type="submit" className="w-full">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Añadir Tienda
+                  </Button>
+                </form>
               </CardContent>
             </Card>
           </div>
