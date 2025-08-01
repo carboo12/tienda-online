@@ -42,7 +42,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (username: string, pass:string) => {
     try {
-      // Always append @example.com to the username to create the email
       const email = `${username.toLowerCase()}@example.com`;
       await signInWithEmailAndPassword(auth, email, pass);
     } catch (error) {
