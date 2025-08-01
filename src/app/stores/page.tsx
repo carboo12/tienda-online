@@ -11,21 +11,34 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import app from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { CalendarIcon, PlusCircle } from 'lucide-react';
+import { addDoc, collection, getFirestore, onSnapshot, query, Timestamp } from 'firebase/firestore';
+import { CalendarIcon, Loader2, PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, FormEvent } from 'react';
 
-const mockStores = [
-  { id: '1', name: 'Tienda A', owner: 'Ana García', phone: '123-456-7890', licenseExpires: new Date() },
-  { id: '2', name: 'Tienda B', owner: 'Carlos Martínez', phone: '098-765-4321', licenseExpires: new Date() },
-];
+interface Store {
+  id: string;
+  name: string;
+  owner: string;
+  phone: string;
+  email?: string;
+  licenseExpires: Date;
+}
+
+const db = getFirestore(app);
 
 export default function StoresPage() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+
+  // Component state
+  const [stores, setStores] = useState<Store[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDataLoading, setIsDataLoading] = useState(true);
 
   // Form state
   const [storeName, setStoreName] = useState('');
@@ -35,38 +48,97 @@ export default function StoresPage() {
   const [licenseExpires, setLicenseExpires] = useState<Date>();
 
   useEffect(() => {
-    if (!isLoading && user?.email !== 'admin@example.com') {
+    if (!isAuthLoading && user?.email !== 'admin@example.com') {
       router.replace('/dashboard');
     }
-  }, [user, isLoading, router]);
-  
-  const handleAddStore = (e: FormEvent) => {
+  }, [user, isAuthLoading, router]);
+
+  useEffect(() => {
+    if (user?.email === 'admin@example.com') {
+      const q = query(collection(db, 'stores'));
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const storesData: Store[] = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          storesData.push({
+            id: doc.id,
+            name: data.name,
+            owner: data.owner,
+            phone: data.phone,
+            email: data.email,
+            licenseExpires: (data.licenseExpires as Timestamp).toDate(),
+          });
+        });
+        setStores(storesData);
+        setIsDataLoading(false);
+      }, (error) => {
+        console.error("Error fetching stores: ", error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'No se pudieron cargar las tiendas.',
+        });
+        setIsDataLoading(false);
+      });
+
+      return () => unsubscribe();
+    }
+  }, [user, toast]);
+
+  const handleAddStore = async (e: FormEvent) => {
     e.preventDefault();
-    const storeData = {
-        storeName,
-        ownerName,
+    if (!licenseExpires) {
+        toast({
+            variant: "destructive",
+            title: "Campo Requerido",
+            description: "Por favor, selecciona la fecha de vencimiento de la licencia.",
+        });
+        return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      await addDoc(collection(db, "stores"), {
+        name: storeName,
+        owner: ownerName,
         phone,
         email,
-        licenseExpires: licenseExpires ? format(licenseExpires, "PPP") : 'N/A'
-    };
-    
-    alert(`Tienda a añadir:\n${JSON.stringify(storeData, null, 2)}`);
-    
-    toast({
-        title: "Tienda Añadida (Simulación)",
-        description: `La tienda "${storeName}" se ha añadido. La conexión a la base de datos se implementará a continuación.`,
-    });
+        licenseExpires: Timestamp.fromDate(licenseExpires),
+      });
 
-    // Reset form
-    setStoreName('');
-    setOwnerName('');
-    setPhone('');
-    setEmail('');
-    setLicenseExpires(undefined);
+      toast({
+        title: "Tienda Añadida",
+        description: `La tienda "${storeName}" ha sido registrada exitosamente.`,
+      });
+
+      // Reset form
+      setStoreName('');
+      setOwnerName('');
+      setPhone('');
+      setEmail('');
+      setLicenseExpires(undefined);
+
+    } catch (error) {
+      console.error("Error adding document: ", error);
+      toast({
+        variant: "destructive",
+        title: "Error al Guardar",
+        description: "No se pudo añadir la tienda. Por favor, inténtalo de nuevo.",
+      });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
-  if (isLoading || !user || user.email !== 'admin@example.com') {
-    return <AppShell><div>Cargando...</div></AppShell>;
+  if (isAuthLoading || !user || user.email !== 'admin@example.com') {
+    return (
+      <AppShell>
+        <div className="flex h-full w-full items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </AppShell>
+    );
   }
 
   return (
@@ -92,19 +164,19 @@ export default function StoresPage() {
                 <form onSubmit={handleAddStore} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="storeName">Nombre de la Tienda</Label>
-                    <Input id="storeName" placeholder="Ej: Moda Exclusiva" value={storeName} onChange={(e) => setStoreName(e.target.value)} required />
+                    <Input id="storeName" placeholder="Ej: Moda Exclusiva" value={storeName} onChange={(e) => setStoreName(e.target.value)} required disabled={isSubmitting}/>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="ownerName">Nombre del Dueño/a</Label>
-                    <Input id="ownerName" placeholder="Ej: Carolina Herrera" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} required />
+                    <Input id="ownerName" placeholder="Ej: Carolina Herrera" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} required disabled={isSubmitting}/>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Teléfono</Label>
-                    <Input id="phone" type="tel" placeholder="Ej: 555-123-4567" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                    <Input id="phone" type="tel" placeholder="Ej: 555-123-4567" value={phone} onChange={(e) => setPhone(e.target.value)} required disabled={isSubmitting}/>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Correo Electrónico (Opcional)</Label>
-                    <Input id="email" type="email" placeholder="Ej: contacto@moda.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                    <Input id="email" type="email" placeholder="Ej: contacto@moda.com" value={email} onChange={(e) => setEmail(e.target.value)} disabled={isSubmitting}/>
                   </div>
                   <div className="space-y-2">
                       <Label htmlFor="license">Vencimiento de Licencia</Label>
@@ -116,9 +188,10 @@ export default function StoresPage() {
                               "w-full justify-start text-left font-normal",
                               !licenseExpires && "text-muted-foreground"
                               )}
+                              disabled={isSubmitting}
                           >
                               <CalendarIcon className="mr-2 h-4 w-4" />
-                              {licenseExpires ? format(licenseExpires, "PPP") : <span>Selecciona una fecha</span>}
+                              {licenseExpires ? format(licenseExpires, "PPP", ) : <span>Selecciona una fecha</span>}
                           </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0">
@@ -131,9 +204,9 @@ export default function StoresPage() {
                           </PopoverContent>
                       </Popover>
                   </div>
-                  <Button type="submit" className="w-full">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Añadir Tienda
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
+                    {isSubmitting ? 'Añadiendo...' : 'Añadir Tienda'}
                   </Button>
                 </form>
               </CardContent>
@@ -148,26 +221,40 @@ export default function StoresPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nombre Tienda</TableHead>
-                      <TableHead>Dueño/a</TableHead>
-                      <TableHead>Teléfono</TableHead>
-                      <TableHead className="text-right">Vencimiento</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {mockStores.map((store) => (
-                      <TableRow key={store.id}>
-                        <TableCell className="font-medium">{store.name}</TableCell>
-                        <TableCell>{store.owner}</TableCell>
-                        <TableCell className="text-muted-foreground">{store.phone}</TableCell>
-                        <TableCell className="text-right">{format(store.licenseExpires, "dd/MM/yyyy")}</TableCell>
+                 {isDataLoading ? (
+                   <div className="flex justify-center items-center h-48">
+                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                   </div>
+                 ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nombre Tienda</TableHead>
+                        <TableHead>Dueño/a</TableHead>
+                        <TableHead>Teléfono</TableHead>
+                        <TableHead className="text-right">Vencimiento</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {stores.length > 0 ? (
+                        stores.map((store) => (
+                          <TableRow key={store.id}>
+                            <TableCell className="font-medium">{store.name}</TableCell>
+                            <TableCell>{store.owner}</TableCell>
+                            <TableCell className="text-muted-foreground">{store.phone}</TableCell>
+                            <TableCell className="text-right">{format(store.licenseExpires, "dd/MM/yyyy")}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                            No hay tiendas registradas.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                 )}
               </CardContent>
             </Card>
           </div>
