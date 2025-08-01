@@ -47,7 +47,7 @@ export default function LoginPage() {
       toast({
         variant: "destructive",
         title: "Error de Inicio de Sesión",
-        description: error instanceof Error ? 'Correo electrónico o contraseña inválidos.' : "Ocurrió un error desconocido.",
+        description: error instanceof Error ? 'Usuario o contraseña inválidos.' : "Ocurrió un error desconocido.",
       });
     } finally {
       setIsSubmitting(false);
@@ -77,7 +77,7 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="email">Correo Electrónico</Label>
+              <Label htmlFor="email">Usuario</Label>
               <Input
                 id="email"
                 type="email"
