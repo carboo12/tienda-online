@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import {
   BarChart,
   Box,
@@ -106,12 +106,13 @@ export function AppShell({ children }: AppShellProps) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col p-0">
-               <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+               <SheetHeader className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+                <SheetTitle className="sr-only">Menú de Navegación</SheetTitle>
                 <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
                   <ShoppingBasket className="h-6 w-6 text-primary" />
                   <span className="">MultiTienda</span>
                 </Link>
-              </div>
+              </SheetHeader>
               {renderNavLinks(true)}
             </SheetContent>
           </Sheet>
