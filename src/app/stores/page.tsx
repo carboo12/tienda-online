@@ -9,13 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { addDoc, collection, getFirestore, onSnapshot, query, Timestamp } from 'firebase/firestore';
-import { CalendarIcon, Loader2, PlusCircle } from 'lucide-react';
+import { addDoc, collection, getFirestore, onSnapshot, query, Timestamp, doc, updateDoc } from 'firebase/firestore';
+import { CalendarIcon, Loader2, PlusCircle, FilePenLine } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, FormEvent } from 'react';
 
@@ -50,24 +51,27 @@ export default function StoresPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(true);
 
+  // State for adding a new store
   const [storeName, setStoreName] = useState('');
   const [ownerName, setOwnerName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [licenseExpires, setLicenseExpires] = useState<Date>();
 
-  useEffect(() => {
-    // This single effect handles both auth check and data fetching.
-    if (isAuthLoading) {
-      return; // Wait until auth state is determined.
-    }
+  // State for editing an existing store
+  const [editingStore, setEditingStore] = useState<Store | null>(null);
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
+  useEffect(() => {
+    if (isAuthLoading) {
+      return; 
+    }
     if (user?.name !== 'admin') {
       router.replace('/dashboard');
-      return; // Redirect non-admins and prevent data fetching.
+      return;
     }
     
-    // Auth is confirmed, user is admin, proceed to fetch data.
     setIsDataLoading(true);
     const q = query(collection(db, 'stores'));
     const unsubscribe = onSnapshot(q, 
@@ -146,8 +150,49 @@ export default function StoresPage() {
     }
   };
 
-  // Auth might still be loading, or the user is not an admin yet.
-  // We show a loader to prevent flicker or showing content prematurely.
+  const handleEditStore = (store: Store) => {
+    setEditingStore({...store});
+    setIsEditDialogOpen(true);
+  };
+  
+  const handleUpdateStore = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!editingStore || !editingStore.licenseExpires) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "No hay datos de tienda para actualizar o falta la fecha.",
+        });
+        return;
+    }
+    setIsEditSubmitting(true);
+    try {
+        const storeRef = doc(db, 'stores', editingStore.id);
+        await updateDoc(storeRef, {
+            name: editingStore.name,
+            owner: editingStore.owner,
+            phone: editingStore.phone,
+            email: editingStore.email,
+            licenseExpires: Timestamp.fromDate(editingStore.licenseExpires),
+        });
+        toast({
+            title: "Tienda Actualizada",
+            description: "Los cambios se han guardado correctamente.",
+        });
+        setIsEditDialogOpen(false);
+        setEditingStore(null);
+    } catch (error) {
+        console.error("Error updating document: ", error);
+        toast({
+            variant: "destructive",
+            title: "Error al Actualizar",
+            description: "No se pudo guardar los cambios. Inténtalo de nuevo.",
+        });
+    } finally {
+        setIsEditSubmitting(false);
+    }
+  }
+
   if (isAuthLoading || user?.name !== 'admin') {
     return (
       <AppShell>
@@ -249,7 +294,8 @@ export default function StoresPage() {
                         <TableHead>Nombre Tienda</TableHead>
                         <TableHead>Dueño/a</TableHead>
                         <TableHead>Teléfono</TableHead>
-                        <TableHead className="text-right">Vencimiento</TableHead>
+                        <TableHead>Vencimiento</TableHead>
+                        <TableHead className="text-right">Acciones</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -259,12 +305,17 @@ export default function StoresPage() {
                             <TableCell className="font-medium">{store.name}</TableCell>
                             <TableCell>{store.owner}</TableCell>
                             <TableCell className="text-muted-foreground">{store.phone}</TableCell>
-                            <TableCell className="text-right">{format(store.licenseExpires, "dd/MM/yyyy")}</TableCell>
+                            <TableCell>{format(store.licenseExpires, "dd/MM/yyyy")}</TableCell>
+                            <TableCell className="text-right">
+                                <Button variant="ghost" size="icon" onClick={() => handleEditStore(store)}>
+                                    <FilePenLine className="h-4 w-4" />
+                                </Button>
+                            </TableCell>
                           </TableRow>
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                          <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                             No hay tiendas registradas.
                           </TableCell>
                         </TableRow>
@@ -277,6 +328,69 @@ export default function StoresPage() {
           </div>
         </div>
       </div>
+
+       {editingStore && (
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Editar Tienda</DialogTitle>
+                    <DialogDescription>
+                        Realiza cambios en los datos de la tienda aquí. Haz clic en guardar cuando hayas terminado.
+                    </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleUpdateStore} className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="editStoreName">Nombre de la Tienda</Label>
+                    <Input id="editStoreName" value={editingStore.name} onChange={(e) => setEditingStore({...editingStore, name: e.target.value})} required disabled={isEditSubmitting}/>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editOwnerName">Nombre del Dueño/a</Label>
+                    <Input id="editOwnerName" value={editingStore.owner} onChange={(e) => setEditingStore({...editingStore, owner: e.target.value})} required disabled={isEditSubmitting}/>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editPhone">Teléfono</Label>
+                    <Input id="editPhone" type="tel" value={editingStore.phone} onChange={(e) => setEditingStore({...editingStore, phone: e.target.value})} required disabled={isEditSubmitting}/>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editEmail">Correo Electrónico (Opcional)</Label>
+                    <Input id="editEmail" type="email" value={editingStore.email || ''} onChange={(e) => setEditingStore({...editingStore, email: e.target.value})} disabled={isEditSubmitting}/>
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="editLicense">Vencimiento de Licencia</Label>
+                       <Popover>
+                          <PopoverTrigger asChild>
+                          <Button
+                              variant={"outline"}
+                              className={cn("w-full justify-start text-left font-normal", !editingStore.licenseExpires && "text-muted-foreground")}
+                              disabled={isEditSubmitting}
+                          >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {editingStore.licenseExpires ? format(editingStore.licenseExpires, "PPP") : <span>Selecciona una fecha</span>}
+                          </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                          <Calendar
+                              mode="single"
+                              selected={editingStore.licenseExpires}
+                              onSelect={(date) => setEditingStore({...editingStore, licenseExpires: date as Date})}
+                              initialFocus
+                          />
+                          </PopoverContent>
+                      </Popover>
+                  </div>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                        <Button type="button" variant="secondary" disabled={isEditSubmitting}>Cancelar</Button>
+                    </DialogClose>
+                    <Button type="submit" disabled={isEditSubmitting}>
+                        {isEditSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Guardar Cambios
+                    </Button>
+                  </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+      )}
     </AppShell>
   );
 }
