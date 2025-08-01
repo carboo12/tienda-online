@@ -18,6 +18,7 @@ import {
   ClipboardList,
   Bot,
   Store,
+  Users,
 } from 'lucide-react';
 import { UserNav } from './user-nav';
 import { ThemeToggle } from './theme-toggle';
@@ -34,6 +35,7 @@ const navItems = [
   { href: '/orders', icon: Package, label: 'Pedidos' },
   { href: '/reports', icon: BarChart, label: 'Informes IA' },
   { href: '/stores', icon: Store, label: 'Tiendas', adminOnly: true },
+  { href: '/users', icon: Users, label: 'Usuarios', adminOnly: true },
   { href: '/log', icon: ClipboardList, label: 'Registro de Acciones', adminOnly: true },
 ];
 
