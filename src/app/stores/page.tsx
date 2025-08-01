@@ -331,63 +331,65 @@ export default function StoresPage() {
 
        {editingStore && (
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent>
+            <DialogContent className="flex flex-col">
                 <DialogHeader>
                     <DialogTitle>Editar Tienda</DialogTitle>
                     <DialogDescription>
                         Realiza cambios en los datos de la tienda aquí. Haz clic en guardar cuando hayas terminado.
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleUpdateStore} className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="editStoreName">Nombre de la Tienda</Label>
-                    <Input id="editStoreName" value={editingStore.name} onChange={(e) => setEditingStore({...editingStore, name: e.target.value})} required disabled={isEditSubmitting}/>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="editOwnerName">Nombre del Dueño/a</Label>
-                    <Input id="editOwnerName" value={editingStore.owner} onChange={(e) => setEditingStore({...editingStore, owner: e.target.value})} required disabled={isEditSubmitting}/>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="editPhone">Teléfono</Label>
-                    <Input id="editPhone" type="tel" value={editingStore.phone} onChange={(e) => setEditingStore({...editingStore, phone: e.target.value})} required disabled={isEditSubmitting}/>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="editEmail">Correo Electrónico (Opcional)</Label>
-                    <Input id="editEmail" type="email" value={editingStore.email || ''} onChange={(e) => setEditingStore({...editingStore, email: e.target.value})} disabled={isEditSubmitting}/>
-                  </div>
-                  <div className="space-y-2">
-                      <Label htmlFor="editLicense">Vencimiento de Licencia</Label>
-                       <Popover>
-                          <PopoverTrigger asChild>
-                          <Button
-                              variant={"outline"}
-                              className={cn("w-full justify-start text-left font-normal", !editingStore.licenseExpires && "text-muted-foreground")}
-                              disabled={isEditSubmitting}
-                          >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {editingStore.licenseExpires ? format(editingStore.licenseExpires, "PPP") : <span>Selecciona una fecha</span>}
-                          </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0">
-                          <Calendar
-                              mode="single"
-                              selected={editingStore.licenseExpires}
-                              onSelect={(date) => setEditingStore({...editingStore, licenseExpires: date as Date})}
-                              initialFocus
-                          />
-                          </PopoverContent>
-                      </Popover>
-                  </div>
-                  <DialogFooter>
-                    <DialogClose asChild>
-                        <Button type="button" variant="secondary" disabled={isEditSubmitting}>Cancelar</Button>
-                    </DialogClose>
-                    <Button type="submit" disabled={isEditSubmitting}>
-                        {isEditSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Guardar Cambios
-                    </Button>
-                  </DialogFooter>
-                </form>
+                <div className="flex-grow overflow-y-auto pr-4 -mr-4">
+                  <form id="edit-store-form" onSubmit={handleUpdateStore} className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="editStoreName">Nombre de la Tienda</Label>
+                      <Input id="editStoreName" value={editingStore.name} onChange={(e) => setEditingStore({...editingStore, name: e.target.value})} required disabled={isEditSubmitting}/>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="editOwnerName">Nombre del Dueño/a</Label>
+                      <Input id="editOwnerName" value={editingStore.owner} onChange={(e) => setEditingStore({...editingStore, owner: e.target.value})} required disabled={isEditSubmitting}/>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="editPhone">Teléfono</Label>
+                      <Input id="editPhone" type="tel" value={editingStore.phone} onChange={(e) => setEditingStore({...editingStore, phone: e.target.value})} required disabled={isEditSubmitting}/>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="editEmail">Correo Electrónico (Opcional)</Label>
+                      <Input id="editEmail" type="email" value={editingStore.email || ''} onChange={(e) => setEditingStore({...editingStore, email: e.target.value})} disabled={isEditSubmitting}/>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="editLicense">Vencimiento de Licencia</Label>
+                         <Popover>
+                            <PopoverTrigger asChild>
+                            <Button
+                                variant={"outline"}
+                                className={cn("w-full justify-start text-left font-normal", !editingStore.licenseExpires && "text-muted-foreground")}
+                                disabled={isEditSubmitting}
+                            >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {editingStore.licenseExpires ? format(editingStore.licenseExpires, "PPP") : <span>Selecciona una fecha</span>}
+                            </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                            <Calendar
+                                mode="single"
+                                selected={editingStore.licenseExpires}
+                                onSelect={(date) => setEditingStore({...editingStore, licenseExpires: date as Date})}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+                  </form>
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                      <Button type="button" variant="secondary" disabled={isEditSubmitting}>Cancelar</Button>
+                  </DialogClose>
+                  <Button type="submit" form="edit-store-form" disabled={isEditSubmitting}>
+                      {isEditSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Guardar Cambios
+                  </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
       )}

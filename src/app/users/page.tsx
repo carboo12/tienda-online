@@ -329,56 +329,58 @@ export default function UsersPage() {
       </div>
        {editingUser && (
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent>
+            <DialogContent className="flex flex-col">
                 <DialogHeader>
                     <DialogTitle>Editar Usuario</DialogTitle>
                     <DialogDescription>
                         Modifica los datos del usuario. La contraseña y el email no se pueden cambiar aquí.
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleUpdateUser} className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="editName">Nombre Completo</Label>
-                    <Input id="editName" value={editingUser.name} onChange={(e) => setEditingUser({...editingUser, name: e.target.value})} required disabled={isEditSubmitting}/>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="editRole">Rol de Usuario</Label>
-                    <Select value={editingUser.role} onValueChange={(value) => setEditingUser({...editingUser, role: value})} required disabled={isEditSubmitting}>
-                        <SelectTrigger id="editRole">
-                            <SelectValue placeholder="Selecciona un rol" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Administrador de Tienda">Administrador de Tienda</SelectItem>
-                            <SelectItem value="Cajero">Cajero</SelectItem>
-                            <SelectItem value="Tomador de Pedido">Tomador de Pedido</SelectItem>
-                            <SelectItem value="Repartidor">Repartidor</SelectItem>
-                        </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="editStore">Tienda Asignada (Opcional)</Label>
-                     <Select value={editingUser.storeId || 'unassigned'} onValueChange={(value) => setEditingUser({...editingUser, storeId: value})} disabled={isEditSubmitting}>
-                        <SelectTrigger id="editStore">
-                            <SelectValue placeholder="Selecciona una tienda" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="unassigned">Sin Asignar (Demo)</SelectItem>
-                            {stores.map(store => (
-                                <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                  </div>
-                  <DialogFooter>
-                    <DialogClose asChild>
-                        <Button type="button" variant="secondary" disabled={isEditSubmitting}>Cancelar</Button>
-                    </DialogClose>
-                    <Button type="submit" disabled={isEditSubmitting}>
-                        {isEditSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Guardar Cambios
-                    </Button>
-                  </DialogFooter>
-                </form>
+                <div className="flex-grow overflow-y-auto pr-4 -mr-4">
+                  <form id="edit-user-form" onSubmit={handleUpdateUser} className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="editName">Nombre Completo</Label>
+                      <Input id="editName" value={editingUser.name} onChange={(e) => setEditingUser({...editingUser, name: e.target.value})} required disabled={isEditSubmitting}/>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="editRole">Rol de Usuario</Label>
+                      <Select value={editingUser.role} onValueChange={(value) => setEditingUser({...editingUser, role: value})} required disabled={isEditSubmitting}>
+                          <SelectTrigger id="editRole">
+                              <SelectValue placeholder="Selecciona un rol" />
+                          </SelectTrigger>
+                          <SelectContent>
+                              <SelectItem value="Administrador de Tienda">Administrador de Tienda</SelectItem>
+                              <SelectItem value="Cajero">Cajero</SelectItem>
+                              <SelectItem value="Tomador de Pedido">Tomador de Pedido</SelectItem>
+                              <SelectItem value="Repartidor">Repartidor</SelectItem>
+                          </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="editStore">Tienda Asignada (Opcional)</Label>
+                       <Select value={editingUser.storeId || 'unassigned'} onValueChange={(value) => setEditingUser({...editingUser, storeId: value})} disabled={isEditSubmitting}>
+                          <SelectTrigger id="editStore">
+                              <SelectValue placeholder="Selecciona una tienda" />
+                          </SelectTrigger>
+                          <SelectContent>
+                              <SelectItem value="unassigned">Sin Asignar (Demo)</SelectItem>
+                              {stores.map(store => (
+                                  <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                              ))}
+                          </SelectContent>
+                      </Select>
+                    </div>
+                  </form>
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                      <Button type="button" variant="secondary" disabled={isEditSubmitting}>Cancelar</Button>
+                  </DialogClose>
+                  <Button type="submit" form="edit-user-form" disabled={isEditSubmitting}>
+                      {isEditSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Guardar Cambios
+                  </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
       )}
