@@ -128,7 +128,7 @@ export default function UsersPage() {
         email,
         password, // Idealmente, esto debería estar hasheado.
         role,
-        storeId: storeId || null, // Guarda el ID o null si no se selecciona
+        storeId: storeId === 'unassigned' ? null : storeId || null,
       });
 
       toast({
@@ -218,7 +218,7 @@ export default function UsersPage() {
                                 <SelectValue placeholder="Selecciona una tienda" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">Sin Asignar (Demo)</SelectItem>
+                                <SelectItem value="unassigned">Sin Asignar (Demo)</SelectItem>
                                 {stores.map(store => (
                                     <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
                                 ))}
