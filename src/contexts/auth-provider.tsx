@@ -40,8 +40,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const login = useCallback(async (username: string, pass:string) => {
+  const login = useCallback(async (username: string, pass: string) => {
     try {
+      // Always append @example.com to the username to create a valid email for Firebase
       const email = `${username.toLowerCase()}@example.com`;
       await signInWithEmailAndPassword(auth, email, pass);
     } catch (error) {
