@@ -71,7 +71,7 @@ export default function LoginPage() {
           </div>
           <CardTitle className="text-2xl font-bold">MultiShop Manager</CardTitle>
           <CardDescription>
-            Enter your credentials to access your dashboard. Try 'Admin' or 'User' with password 'Id14304++'.
+            Enter your credentials to access your dashboard.
           </CardDescription>
         </CardHeader>
         <CardContent>
