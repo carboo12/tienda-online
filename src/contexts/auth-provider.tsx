@@ -25,7 +25,7 @@ const auth = getAuth(app);
 // Hardcoded master user credentials
 const MASTER_USER = 'admin';
 const MASTER_PASS = 'Id14304++';
-const ADMIN_EMAIL = 'admin@example.com';
+const ADMIN_EMAIL = 'carboo12@gmail.com';
 const ADMIN_UID = 'admin-user';
 
 export function AuthProvider({ children }: { children: ReactNode }) {

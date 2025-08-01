@@ -23,12 +23,12 @@ export default function LogPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && user?.email !== 'admin@example.com') {
+    if (!isLoading && user?.email !== 'carboo12@gmail.com') {
       router.replace('/dashboard');
     }
   }, [user, isLoading, router]);
 
-  if (isLoading || !user || user.email !== 'admin@example.com') {
+  if (isLoading || !user || user.email !== 'carboo12@gmail.com') {
     return <AppShell><div>Cargando...</div></AppShell>;
   }
 

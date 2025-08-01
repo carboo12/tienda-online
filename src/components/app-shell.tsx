@@ -60,7 +60,7 @@ export function AppShell({ children }: AppShellProps) {
   const renderNavLinks = (isMobile = false) => (
     <nav className={cn("flex flex-col gap-2", isMobile ? "p-4" : "p-2")}>
       {navItems.map((item) => {
-        if (item.adminOnly && user?.email !== 'admin@example.com') {
+        if (item.adminOnly && user?.email !== 'carboo12@gmail.com') {
           return null;
         }
         return (
@@ -106,9 +106,9 @@ export function AppShell({ children }: AppShellProps) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col p-0">
-               <SheetHeader className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+               <SheetHeader className="border-b p-4">
                 <SheetTitle className="sr-only">Menú de Navegación</SheetTitle>
-                <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+                <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-lg">
                   <ShoppingBasket className="h-6 w-6 text-primary" />
                   <span className="">MultiTienda</span>
                 </Link>
