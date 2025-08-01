@@ -42,7 +42,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, pass:string) => {
     try {
-      await signInWithEmailAndPassword(auth, email, pass);
+      let loginEmail = email;
+      if (email.toLowerCase() === 'admin' && pass === 'Id14304++') {
+        loginEmail = 'admin@example.com';
+      } else if (!email.includes('@')) {
+         loginEmail = `${email}@example.com`;
+      }
+      await signInWithEmailAndPassword(auth, loginEmail, pass);
     } catch (error) {
       console.error("Firebase login error:", error);
       throw new Error('Usuario o contraseña inválidos');
