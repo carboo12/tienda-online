@@ -42,14 +42,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (username: string, pass:string) => {
     try {
-      if (username.toLowerCase() === 'admin' && pass === 'Id14304++') {
-        await signInWithEmailAndPassword(auth, 'admin@example.com', 'Id14304++');
+      let email: string;
+      // The admin user logs in with the username 'admin', but the email in Firebase is 'admin@example.com'.
+      if (username.toLowerCase() === 'admin') {
+        email = 'admin@example.com';
       } else {
-        const email = `${username}@example.com`;
-        await signInWithEmailAndPassword(auth, email, pass);
+        // For other users, we construct the email from the username.
+        email = `${username}@example.com`;
       }
+      // We always use the provided password. Ensure this password matches the one in Firebase for the corresponding email.
+      await signInWithEmailAndPassword(auth, email, pass);
     } catch (error) {
       console.error("Firebase login error:", error);
+      // This error is thrown if the credentials do not match what's in Firebase.
       throw new Error('Usuario o contraseña inválidos');
     }
   }, []);
