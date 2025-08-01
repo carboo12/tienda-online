@@ -46,39 +46,47 @@ export default function StoresPage() {
   const [licenseExpires, setLicenseExpires] = useState<Date>();
 
   useEffect(() => {
+    // Wait until auth state is determined
     if (isAuthLoading) {
-      return; 
+      return;
     }
+
+    // If no user or not admin, redirect to dashboard.
     if (user?.email !== 'admin@example.com') {
       router.replace('/dashboard');
       return;
     }
 
+    // Now, we are sure user is admin, so we can fetch data.
+    setIsDataLoading(true);
     const q = query(collection(db, 'stores'));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const storesData: Store[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        storesData.push({
-          id: doc.id,
-          name: data.name,
-          owner: data.owner,
-          phone: data.phone,
-          email: data.email,
-          licenseExpires: (data.licenseExpires as Timestamp).toDate(),
+    const unsubscribe = onSnapshot(q, 
+      (querySnapshot) => {
+        const storesData: Store[] = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          storesData.push({
+            id: doc.id,
+            name: data.name,
+            owner: data.owner,
+            phone: data.phone,
+            email: data.email,
+            licenseExpires: (data.licenseExpires as Timestamp).toDate(),
+          });
         });
-      });
-      setStores(storesData);
-      setIsDataLoading(false);
-    }, (error) => {
-      console.error("Error fetching stores: ", error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'No se pudieron cargar las tiendas.',
-      });
-      setIsDataLoading(false);
-    });
+        setStores(storesData);
+        setIsDataLoading(false);
+      }, 
+      (error) => {
+        console.error("Error fetching stores: ", error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'No se pudieron cargar las tiendas.',
+        });
+        setIsDataLoading(false);
+      }
+    );
 
     return () => unsubscribe();
   }, [user, isAuthLoading, router, toast]);
