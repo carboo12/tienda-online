@@ -13,7 +13,7 @@ export interface User {
 
 export interface AuthContextType {
   user: User | null;
-  login: (email: string, pass: string) => Promise<void>;
+  login: (username: string, pass: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -40,18 +40,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const login = useCallback(async (email: string, pass:string) => {
+  const login = useCallback(async (username: string, pass:string) => {
     try {
-      // Hardcoded master user check
-      if (email.toLowerCase() === 'admin' && pass === 'Id14304++') {
-        // Use the actual admin credentials for Firebase
+      if (username.toLowerCase() === 'admin' && pass === 'Id14304++') {
         await signInWithEmailAndPassword(auth, 'admin@example.com', 'Id14304++');
       } else {
-        let loginEmail = email;
-        if (!email.includes('@')) {
-           loginEmail = `${email}@example.com`;
-        }
-        await signInWithEmailAndPassword(auth, loginEmail, pass);
+        const email = `${username}@example.com`;
+        await signInWithEmailAndPassword(auth, email, pass);
       }
     } catch (error) {
       console.error("Firebase login error:", error);
