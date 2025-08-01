@@ -35,12 +35,10 @@ export default function StoresPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  // Component state
   const [stores, setStores] = useState<Store[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(true);
 
-  // Form state
   const [storeName, setStoreName] = useState('');
   const [ownerName, setOwnerName] = useState('');
   const [phone, setPhone] = useState('');
@@ -48,42 +46,42 @@ export default function StoresPage() {
   const [licenseExpires, setLicenseExpires] = useState<Date>();
 
   useEffect(() => {
-    if (!isAuthLoading && user?.email !== 'admin@example.com') {
+    if (isAuthLoading) {
+      return; 
+    }
+    if (user?.email !== 'admin@example.com') {
       router.replace('/dashboard');
+      return;
     }
-  }, [user, isAuthLoading, router]);
 
-  useEffect(() => {
-    if (user?.email === 'admin@example.com') {
-      const q = query(collection(db, 'stores'));
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const storesData: Store[] = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          storesData.push({
-            id: doc.id,
-            name: data.name,
-            owner: data.owner,
-            phone: data.phone,
-            email: data.email,
-            licenseExpires: (data.licenseExpires as Timestamp).toDate(),
-          });
+    const q = query(collection(db, 'stores'));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const storesData: Store[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        storesData.push({
+          id: doc.id,
+          name: data.name,
+          owner: data.owner,
+          phone: data.phone,
+          email: data.email,
+          licenseExpires: (data.licenseExpires as Timestamp).toDate(),
         });
-        setStores(storesData);
-        setIsDataLoading(false);
-      }, (error) => {
-        console.error("Error fetching stores: ", error);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'No se pudieron cargar las tiendas.',
-        });
-        setIsDataLoading(false);
       });
+      setStores(storesData);
+      setIsDataLoading(false);
+    }, (error) => {
+      console.error("Error fetching stores: ", error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'No se pudieron cargar las tiendas.',
+      });
+      setIsDataLoading(false);
+    });
 
-      return () => unsubscribe();
-    }
-  }, [user, toast]);
+    return () => unsubscribe();
+  }, [user, isAuthLoading, router, toast]);
 
   const handleAddStore = async (e: FormEvent) => {
     e.preventDefault();
@@ -112,7 +110,6 @@ export default function StoresPage() {
         description: `La tienda "${storeName}" ha sido registrada exitosamente.`,
       });
 
-      // Reset form
       setStoreName('');
       setOwnerName('');
       setPhone('');
@@ -131,7 +128,7 @@ export default function StoresPage() {
     }
   };
 
-  if (isAuthLoading || !user || user.email !== 'admin@example.com') {
+  if (isAuthLoading || user?.email !== 'admin@example.com') {
     return (
       <AppShell>
         <div className="flex h-full w-full items-center justify-center">
