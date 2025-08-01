@@ -3,7 +3,7 @@
 
 import { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, User as FirebaseUser } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, User as FirebaseUser, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import app from '@/lib/firebase';
 
 export interface User {
@@ -14,6 +14,7 @@ export interface User {
 export interface AuthContextType {
   user: User | null;
   login: (email: string, pass: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -21,6 +22,7 @@ export interface AuthContextType {
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -47,7 +49,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Firebase login error:", error);
       setIsLoading(false);
-      throw new Error('Usuario o contraseña inválidos');
+      throw error;
+    }
+  }, []);
+
+  const loginWithGoogle = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+       console.error("Firebase Google login error:", error);
+       setIsLoading(false);
+       throw error;
     }
   }, []);
 
@@ -62,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [router]);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, loginWithGoogle, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
