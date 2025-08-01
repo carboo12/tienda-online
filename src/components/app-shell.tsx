@@ -17,11 +17,11 @@ import {
   ShoppingBasket,
   ClipboardList,
   Bot,
+  Store,
 } from 'lucide-react';
 import { UserNav } from './user-nav';
 import { ThemeToggle } from './theme-toggle';
 import { cn } from '@/lib/utils';
-import { Skeleton } from './ui/skeleton';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -33,6 +33,7 @@ const navItems = [
   { href: '/inventory', icon: Box, label: 'Inventario' },
   { href: '/orders', icon: Package, label: 'Pedidos' },
   { href: '/reports', icon: BarChart, label: 'Informes IA' },
+  { href: '/stores', icon: Store, label: 'Tiendas', adminOnly: true },
   { href: '/log', icon: ClipboardList, label: 'Registro de Acciones', adminOnly: true },
 ];
 
