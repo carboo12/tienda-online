@@ -42,8 +42,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, pass:string) => {
     try {
+      // Hardcoded master user check
       if (email.toLowerCase() === 'admin' && pass === 'Id14304++') {
-        await signInWithEmailAndPassword(auth, 'admin@example.com', pass);
+        // Use the actual admin credentials for Firebase
+        await signInWithEmailAndPassword(auth, 'admin@example.com', 'Id14304++');
       } else {
         let loginEmail = email;
         if (!email.includes('@')) {
