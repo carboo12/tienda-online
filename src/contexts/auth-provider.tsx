@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
-      // If a hardcoded admin session is active, don't overwrite it
+      // If a local admin session is already active, don't overwrite it.
       if (user?.uid === ADMIN_UID) {
         setIsLoading(false);
         return;
@@ -50,39 +50,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, []); // Removed `user` from dependencies to prevent re-renders
 
   const login = useCallback(async (username: string, pass: string) => {
+    setIsLoading(true);
     if (username === MASTER_USER && pass === MASTER_PASS) {
-      // Handle master user login locally
       setUser({ email: ADMIN_EMAIL, uid: ADMIN_UID });
       setIsLoading(false);
       return;
     }
 
     try {
-      // For all other users, use Firebase Auth
       const email = `${username.toLowerCase()}@example.com`;
       await signInWithEmailAndPassword(auth, email, pass);
     } catch (error) {
       console.error("Firebase login error:", error);
+      setIsLoading(false);
       throw new Error('Usuario o contraseña inválidos');
     }
   }, []);
 
   const logout = useCallback(async () => {
-    // If it was the hardcoded admin, just clear the state
-    if (user?.uid === ADMIN_UID) {
-      setUser(null);
-    } else {
-      try {
-        await signOut(auth);
-      } catch (error) {
-        console.error("Firebase logout error:", error);
-      }
+    setUser(null);
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Firebase logout error:", error);
     }
     router.push('/login');
-  }, [user, router]);
+  }, [router]);
 
   return (
     <AuthContext.Provider value={{ user, login, logout, isLoading }}>
