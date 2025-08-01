@@ -4,7 +4,6 @@
 import { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, User as FirebaseUser, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 // Centralized Firebase Configuration
 const firebaseConfig = {
@@ -17,25 +16,23 @@ const firebaseConfig = {
 };
 
 // Centralized Firebase Initialization
-const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
+export const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 export interface User {
-  email: string | null;
-  uid: string;
+  name: string;
 }
 
 export interface AuthContextType {
   user: User | null;
-  login: (email: string, pass: string) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
+  login: (user: User) => void;
   logout: () => void;
   isLoading: boolean;
-  app: FirebaseApp; // Expose app instance if needed by other parts
+  app: FirebaseApp;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
+
+const USER_STORAGE_KEY = 'multishop_user';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -43,52 +40,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
-      if (firebaseUser) {
-        setUser({ email: firebaseUser.email, uid: firebaseUser.uid });
-      } else {
-        setUser(null);
+    try {
+      const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
       }
+    } catch (error) {
+      console.error("Failed to parse user from localStorage", error);
+      localStorage.removeItem(USER_STORAGE_KEY);
+    } finally {
       setIsLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const login = useCallback(async (email: string, pass: string) => {
-    setIsLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, email, pass);
-    } catch (error) {
-      console.error("Firebase login error:", error);
-      setIsLoading(false);
-      throw error;
     }
   }, []);
 
-  const loginWithGoogle = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      await signInWithPopup(auth, googleProvider);
-    } catch (error) {
-       console.error("Firebase Google login error:", error);
-       setIsLoading(false);
-       throw error;
-    }
+  const login = useCallback((user: User) => {
+    setUser(user);
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
   }, []);
 
-  const logout = useCallback(async () => {
-    try {
-      await signOut(auth);
-      setUser(null);
-      router.push('/login');
-    } catch (error) {
-      console.error("Firebase logout error:", error);
-    }
+  const logout = useCallback(() => {
+    setUser(null);
+    localStorage.removeItem(USER_STORAGE_KEY);
+    router.push('/login');
   }, [router]);
 
   return (
-    <AuthContext.Provider value={{ user, login, loginWithGoogle, logout, isLoading, app }}>
+    <AuthContext.Provider value={{ user, login, logout, isLoading, app }}>
       {children}
     </AuthContext.Provider>
   );

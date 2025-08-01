@@ -62,7 +62,7 @@ export default function StoresPage() {
       return; // Wait until auth state is determined.
     }
 
-    if (user?.email !== 'carboo12@gmail.com') {
+    if (user?.name !== 'admin') {
       router.replace('/dashboard');
       return; // Redirect non-admins and prevent data fetching.
     }
@@ -148,7 +148,7 @@ export default function StoresPage() {
 
   // Auth might still be loading, or the user is not an admin yet.
   // We show a loader to prevent flicker or showing content prematurely.
-  if (isAuthLoading || user?.email !== 'carboo12@gmail.com') {
+  if (isAuthLoading || user?.name !== 'admin') {
     return (
       <AppShell>
         <div className="flex h-full w-full items-center justify-center">

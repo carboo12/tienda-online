@@ -12,10 +12,10 @@ import { ShieldAlert } from 'lucide-react';
 const logData = [
     { id: 1, user: 'user1@example.com', action: 'CREATE_INVOICE', details: 'Factura #INV-0012 creada para Cliente A', timestamp: '2023-10-27 10:00:00', status: 'Éxito' },
     { id: 2, user: 'user2@example.com', action: 'UPDATE_PRODUCT', details: 'Producto SKU #PROD-554 cantidad actualizada a 50', timestamp: '2023-10-27 10:05:12', status: 'Éxito' },
-    { id: 3, user: 'admin@example.com', action: 'DELETE_USER', details: 'Cuenta de usuario para user3@example.com eliminada', timestamp: '2023-10-27 10:15:34', status: 'Advertencia' },
+    { id: 3, user: 'admin', action: 'DELETE_USER', details: 'Cuenta de usuario para user3@example.com eliminada', timestamp: '2023-10-27 10:15:34', status: 'Advertencia' },
     { id: 4, user: 'user1@example.com', action: 'CREATE_ORDER', details: 'Pedido #ORD-987 creado', timestamp: '2023-10-27 11:20:05', status: 'Éxito' },
     { id: 5, user: 'user2@example.com', action: 'LOGIN_ATTEMPT', details: 'Intento de inicio de sesión fallido desde IP 192.168.1.10', timestamp: '2023-10-27 11:30:15', status: 'Error' },
-    { id: 6, user: 'admin@example.com', action: 'VIEW_REPORT', details: 'Visto informe de ventas de IA para Q3', timestamp: '2023-10-27 12:00:00', status: 'Info' },
+    { id: 6, user: 'admin', action: 'VIEW_REPORT', details: 'Visto informe de ventas de IA para Q3', timestamp: '2023-10-27 12:00:00', status: 'Info' },
 ];
 
 export default function LogPage() {
@@ -23,12 +23,12 @@ export default function LogPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && user?.email !== 'carboo12@gmail.com') {
+    if (!isLoading && user?.name !== 'admin') {
       router.replace('/dashboard');
     }
   }, [user, isLoading, router]);
 
-  if (isLoading || !user || user.email !== 'carboo12@gmail.com') {
+  if (isLoading || !user || user.name !== 'admin') {
     return <AppShell><div>Cargando...</div></AppShell>;
   }
 
