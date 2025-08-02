@@ -48,7 +48,7 @@ export default function UsersPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('');
-  const [storeId, setStoreId] = useState('');
+  const [storeId, setStoreId] = useState('unassigned');
 
   // State for editing user
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -137,7 +137,7 @@ export default function UsersPage() {
         email,
         password, // Ideally, this should be hashed.
         role,
-        storeId: storeId === 'unassigned' ? null : storeId || null,
+        storeId: storeId === 'unassigned' ? null : storeId,
       });
 
       toast({
@@ -149,7 +149,7 @@ export default function UsersPage() {
       setEmail('');
       setPassword('');
       setRole('');
-      setStoreId('');
+      setStoreId('unassigned');
 
     } catch (error) {
       console.error("Error adding document: ", error);
@@ -181,7 +181,7 @@ export default function UsersPage() {
         await updateDoc(userRef, {
             name: editingUser.name,
             role: editingUser.role,
-            storeId: editingUser.storeId === 'unassigned' ? null : editingUser.storeId || null
+            storeId: editingUser.storeId === 'unassigned' ? null : editingUser.storeId
         });
         toast({ title: "Usuario Actualizado", description: "Los cambios se han guardado."});
         setIsEditDialogOpen(false);
@@ -329,7 +329,7 @@ export default function UsersPage() {
       </div>
        {editingUser && (
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent className="flex flex-col">
+            <DialogContent className="flex flex-col h-full max-h-[90vh]">
                 <DialogHeader>
                     <DialogTitle>Editar Usuario</DialogTitle>
                     <DialogDescription>
@@ -387,3 +387,5 @@ export default function UsersPage() {
     </AppShell>
   );
 }
+
+    

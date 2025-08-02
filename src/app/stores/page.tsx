@@ -222,7 +222,7 @@ export default function StoresPage() {
                   Completa el formulario para registrar una nueva tienda.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="overflow-y-auto max-h-[60vh] p-6">
                 <form onSubmit={handleAddStore} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="storeName">Nombre de la Tienda</Label>
@@ -331,7 +331,7 @@ export default function StoresPage() {
 
        {editingStore && (
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent className="flex flex-col">
+            <DialogContent className="flex flex-col h-full max-h-[90vh]">
                 <DialogHeader>
                     <DialogTitle>Editar Tienda</DialogTitle>
                     <DialogDescription>
@@ -396,3 +396,5 @@ export default function StoresPage() {
     </AppShell>
   );
 }
+
+    
