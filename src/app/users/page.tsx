@@ -8,14 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { getFirestore, collection, getDocs, onSnapshot, query, addDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, onSnapshot, query, addDoc, doc, getDoc } from 'firebase/firestore';
 import { app } from '@/contexts/auth-provider';
-import { Loader2, PlusCircle, FilePenLine } from 'lucide-react';
+import { Loader2, PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, FormEvent, useCallback } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 
 interface Store {
   id: string;
@@ -49,11 +48,6 @@ export default function UsersPage() {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('');
   const [storeId, setStoreId] = useState('unassigned');
-
-  // State for editing user
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [isEditSubmitting, setIsEditSubmitting] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -145,6 +139,7 @@ export default function UsersPage() {
         description: `El usuario "${name}" ha sido registrado exitosamente.`,
       });
 
+      // Reset form
       setName('');
       setEmail('');
       setPassword('');
@@ -162,37 +157,6 @@ export default function UsersPage() {
         setIsSubmitting(false);
     }
   };
-
-  const handleEditUser = (userToEdit: User) => {
-    setEditingUser({...userToEdit});
-    setIsEditDialogOpen(true);
-  }
-
-  const handleUpdateUser = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!editingUser) {
-        toast({ variant: "destructive", title: "Error", description: "No hay usuario para actualizar."});
-        return;
-    }
-
-    setIsEditSubmitting(true);
-    try {
-        const userRef = doc(db, 'users', editingUser.id);
-        await updateDoc(userRef, {
-            name: editingUser.name,
-            role: editingUser.role,
-            storeId: editingUser.storeId === 'unassigned' ? null : editingUser.storeId
-        });
-        toast({ title: "Usuario Actualizado", description: "Los cambios se han guardado."});
-        setIsEditDialogOpen(false);
-        setEditingUser(null);
-    } catch (error) {
-        console.error("Error updating user:", error);
-        toast({ variant: "destructive", title: "Error", description: "No se pudo actualizar el usuario."});
-    } finally {
-        setIsEditSubmitting(false);
-    }
-  }
 
   if (isAuthLoading || user?.name !== 'admin') {
     return (
@@ -294,31 +258,17 @@ export default function UsersPage() {
                         <TableHead>Email</TableHead>
                         <TableHead>Rol</TableHead>
                         <TableHead>Tienda</TableHead>
-                        <TableHead className="text-right">Acciones</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {users.length > 0 ? (
-                        users.map((user) => (
-                          <TableRow key={user.id}>
-                            <TableCell className="font-medium">{user.name}</TableCell>
-                            <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                            <TableCell>{user.role}</TableCell>
-                            <TableCell className="text-muted-foreground">{user.storeName}</TableCell>
-                            <TableCell className="text-right">
-                                <Button variant="ghost" size="icon" onClick={() => handleEditUser(user)}>
-                                    <FilePenLine className="h-4 w-4" />
-                                </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                            No hay usuarios registrados.
-                          </TableCell>
+                      {users.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell className="font-medium">{user.name}</TableCell>
+                          <TableCell className="text-muted-foreground">{user.email}</TableCell>
+                          <TableCell>{user.role}</TableCell>
+                          <TableCell className="text-muted-foreground">{user.storeName}</TableCell>
                         </TableRow>
-                      )}
+                      ))}
                     </TableBody>
                   </Table>
                  )}
@@ -327,65 +277,6 @@ export default function UsersPage() {
           </div>
         </div>
       </div>
-       {editingUser && (
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent className="flex flex-col h-full max-h-[90vh]">
-                <DialogHeader>
-                    <DialogTitle>Editar Usuario</DialogTitle>
-                    <DialogDescription>
-                        Modifica los datos del usuario. La contraseña y el email no se pueden cambiar aquí.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="flex-grow overflow-y-auto pr-4 -mr-4">
-                  <form id="edit-user-form" onSubmit={handleUpdateUser} className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="editName">Nombre Completo</Label>
-                      <Input id="editName" value={editingUser.name} onChange={(e) => setEditingUser({...editingUser, name: e.target.value})} required disabled={isEditSubmitting}/>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="editRole">Rol de Usuario</Label>
-                      <Select value={editingUser.role} onValueChange={(value) => setEditingUser({...editingUser, role: value})} required disabled={isEditSubmitting}>
-                          <SelectTrigger id="editRole">
-                              <SelectValue placeholder="Selecciona un rol" />
-                          </SelectTrigger>
-                          <SelectContent>
-                              <SelectItem value="Administrador de Tienda">Administrador de Tienda</SelectItem>
-                              <SelectItem value="Cajero">Cajero</SelectItem>
-                              <SelectItem value="Tomador de Pedido">Tomador de Pedido</SelectItem>
-                              <SelectItem value="Repartidor">Repartidor</SelectItem>
-                          </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="editStore">Tienda Asignada (Opcional)</Label>
-                       <Select value={editingUser.storeId || 'unassigned'} onValueChange={(value) => setEditingUser({...editingUser, storeId: value})} disabled={isEditSubmitting}>
-                          <SelectTrigger id="editStore">
-                              <SelectValue placeholder="Selecciona una tienda" />
-                          </SelectTrigger>
-                          <SelectContent>
-                              <SelectItem value="unassigned">Sin Asignar (Demo)</SelectItem>
-                              {stores.map(store => (
-                                  <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
-                              ))}
-                          </SelectContent>
-                      </Select>
-                    </div>
-                  </form>
-                </div>
-                <DialogFooter>
-                  <DialogClose asChild>
-                      <Button type="button" variant="secondary" disabled={isEditSubmitting}>Cancelar</Button>
-                  </DialogClose>
-                  <Button type="submit" form="edit-user-form" disabled={isEditSubmitting}>
-                      {isEditSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Guardar Cambios
-                  </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-      )}
     </AppShell>
   );
 }
-
-    

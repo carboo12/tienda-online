@@ -2,8 +2,7 @@
 import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { PlusCircle, WifiOff } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 
 export default function OrdersPage() {
   return (
@@ -18,14 +17,6 @@ export default function OrdersPage() {
           Crear Pedido
         </Button>
       </div>
-
-       <Alert className="mt-4 bg-accent/30">
-          <WifiOff className="h-4 w-4" />
-          <AlertTitle>Modo sin conexión disponible</AlertTitle>
-          <AlertDescription>
-            Puedes crear nuevos pedidos incluso sin conexión a internet. Se sincronizarán automáticamente cuando vuelvas a estar en línea.
-          </AlertDescription>
-        </Alert>
       
       <Card className="mt-6">
         <CardHeader>

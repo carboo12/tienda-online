@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
   BarChart,
   Box,
@@ -15,29 +15,25 @@ import {
   Menu,
   Package,
   ShoppingBasket,
-  ClipboardList,
-  Bot,
   Store,
   Users,
+  ClipboardList,
+  Bot
 } from 'lucide-react';
 import { UserNav } from './user-nav';
 import { ThemeToggle } from './theme-toggle';
 import { cn } from '@/lib/utils';
-import { Separator } from './ui/separator';
 
 interface AppShellProps {
   children: React.ReactNode;
 }
 
-const mainNavItems = [
+const navItems = [
   { href: '/dashboard', icon: Home, label: 'Panel de Control' },
   { href: '/invoices', icon: FileText, label: 'Facturación' },
   { href: '/inventory', icon: Box, label: 'Inventario' },
   { href: '/orders', icon: Package, label: 'Pedidos' },
   { href: '/reports', icon: BarChart, label: 'Informes IA' },
-];
-
-const adminNavItems = [
   { href: '/stores', icon: Store, label: 'Tiendas' },
   { href: '/users', icon: Users, label: 'Usuarios' },
   { href: '/log', icon: ClipboardList, label: 'Registro de Acciones' },
@@ -63,9 +59,15 @@ export function AppShell({ children }: AppShellProps) {
     );
   }
 
-  const renderNavLinks = (isMobile = false) => (
-    <nav className={cn("flex flex-col gap-1", isMobile ? "p-4" : "p-2")}>
-      {mainNavItems.map((item) => (
+  const renderNavLinks = (isMobile = false) => {
+    const isAdmin = user?.name === 'admin';
+    const filteredNavItems = isAdmin
+      ? navItems
+      : navItems.filter(item => !['/stores', '/users', '/log'].includes(item.href));
+
+    return (
+      <nav className={cn("flex flex-col gap-1 p-2", isMobile && "p-4")}>
+        {filteredNavItems.map((item) => (
           <Button
             key={item.href}
             variant={pathname === item.href ? 'secondary' : 'ghost'}
@@ -78,30 +80,11 @@ export function AppShell({ children }: AppShellProps) {
               {item.label}
             </Link>
           </Button>
-        )
-      )}
-       {user?.name === 'admin' && (
-        <>
-          <Separator className="my-2"/>
-           <h3 className="px-4 py-2 text-xs font-semibold text-muted-foreground tracking-wider uppercase">Administración</h3>
-          {adminNavItems.map((item) => (
-             <Button
-                key={item.href}
-                variant={pathname === item.href ? 'secondary' : 'ghost'}
-                className="justify-start"
-                asChild
-                onClick={() => isMobile && setMobileNavOpen(false)}
-              >
-                <Link href={item.href}>
-                  <item.icon className="mr-2 h-4 w-4" />
-                  {item.label}
-                </Link>
-              </Button>
-          ))}
-        </>
-      )}
-    </nav>
-  );
+        ))}
+      </nav>
+    );
+  }
+
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -114,7 +97,7 @@ export function AppShell({ children }: AppShellProps) {
             </Link>
           </div>
           <div className="flex-1 overflow-auto py-2">
-            {renderNavLinks()}
+           {renderNavLinks()}
           </div>
         </div>
       </aside>
@@ -128,13 +111,12 @@ export function AppShell({ children }: AppShellProps) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col p-0">
-               <SheetHeader className="border-b p-4">
-                <SheetTitle className="sr-only">Menú de Navegación</SheetTitle>
-                <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-lg" onClick={() => setMobileNavOpen(false)}>
+               <div className="flex h-14 items-center border-b px-6">
+                <Link href="/dashboard" className="flex items-center gap-2 font-semibold" onClick={() => setMobileNavOpen(false)}>
                   <ShoppingBasket className="h-6 w-6 text-primary" />
                   <span className="">MultiTienda</span>
                 </Link>
-              </SheetHeader>
+              </div>
               <div className="overflow-y-auto">
                 {renderNavLinks(true)}
               </div>
