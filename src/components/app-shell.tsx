@@ -40,7 +40,7 @@ const mainNavItems = [
   { href: '/inventory', icon: Box, label: 'Inventario' },
   { href: '/orders', icon: Package, label: 'Pedidos' },
   { href: '/clients', icon: UsersRound, label: 'Clientes' },
-  { href: '/reports', icon: BarChart, label: 'Informes IA' },
+  { href: '/reports', icon: BarChart, label: 'Informes' },
 ];
 
 const adminNavItems = [
