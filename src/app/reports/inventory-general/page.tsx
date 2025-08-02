@@ -132,12 +132,12 @@ export default function GeneralInventoryReportPage() {
         
         <Card id="report-card">
           <CardHeader>
-            <div className="flex justify-between items-start">
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
               <div>
                 <CardTitle className="text-2xl font-bold font-headline">Informe de Inventario General</CardTitle>
                 <CardDescription>Un resumen completo de todos los productos, sus cantidades y su valor.</CardDescription>
               </div>
-              <p className="text-sm text-muted-foreground">{format(new Date(), "dd/MM/yyyy")}</p>
+              <p className="text-sm text-muted-foreground whitespace-nowrap">{format(new Date(), "dd/MM/yyyy")}</p>
             </div>
           </CardHeader>
           <CardContent>
@@ -147,7 +147,7 @@ export default function GeneralInventoryReportPage() {
               </div>
             ) : (
               <div className="space-y-6">
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Total de Productos</CardTitle>
