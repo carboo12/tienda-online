@@ -27,10 +27,11 @@ export default function NewProductPage() {
   const [quantity, setQuantity] = useState('');
   const [costPrice, setCostPrice] = useState('');
   const [sellingPrice, setSellingPrice] = useState('');
+  const [minimumStock, setMinimumStock] = useState('');
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!description || !productType || !quantity || !costPrice || !sellingPrice) {
+    if (!description || !productType || !quantity || !costPrice || !sellingPrice || !minimumStock) {
         toast({
             variant: "destructive",
             title: "Campos Requeridos",
@@ -51,6 +52,7 @@ export default function NewProductPage() {
         quantity: parseInt(quantity, 10) || 0,
         costPrice: parseFloat(costPrice) || 0,
         sellingPrice: parseFloat(sellingPrice) || 0,
+        minimumStock: parseInt(minimumStock, 10) || 0,
         createdAt: new Date(),
       });
 
@@ -108,13 +110,19 @@ export default function NewProductPage() {
                             <Input id="quantity" type="number" placeholder="Ej: 100" value={quantity} onChange={(e) => setQuantity(e.target.value)} required disabled={isSubmitting}/>
                         </div>
                         <div className="space-y-2">
+                            <Label htmlFor="minimumStock">Stock Mínimo</Label>
+                            <Input id="minimumStock" type="number" placeholder="Ej: 10" value={minimumStock} onChange={(e) => setMinimumStock(e.target.value)} required disabled={isSubmitting}/>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                         <div className="space-y-2">
                             <Label htmlFor="costPrice">Precio de Costo (C$)</Label>
                             <Input id="costPrice" type="number" step="any" placeholder="Ej: 25.50" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} required disabled={isSubmitting}/>
                         </div>
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="sellingPrice">Precio de Venta Unitario (C$)</Label>
-                        <Input id="sellingPrice" type="number" step="any" placeholder="Ej: 35.00" value={sellingPrice} onChange={(e) => setSellingPrice(e.target.value)} required disabled={isSubmitting}/>
+                        <div className="space-y-2">
+                            <Label htmlFor="sellingPrice">Precio de Venta (C$)</Label>
+                            <Input id="sellingPrice" type="number" step="any" placeholder="Ej: 35.00" value={sellingPrice} onChange={(e) => setSellingPrice(e.target.value)} required disabled={isSubmitting}/>
+                        </div>
                     </div>
 
                     <Button type="submit" className="w-full" disabled={isSubmitting}>

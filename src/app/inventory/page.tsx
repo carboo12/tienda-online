@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
 import { getFirestore, collection, onSnapshot, query } from 'firebase/firestore';
-import { Loader2, PlusCircle } from 'lucide-react';
+import { Loader2, PlusCircle, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 interface Product {
@@ -20,6 +21,7 @@ interface Product {
   quantity: number;
   costPrice: number;
   sellingPrice: number;
+  minimumStock: number;
 }
 
 export default function InventoryPage() {
@@ -49,6 +51,7 @@ export default function InventoryPage() {
             quantity: data.quantity,
             costPrice: data.costPrice,
             sellingPrice: data.sellingPrice,
+            minimumStock: data.minimumStock,
           });
         });
         setProducts(productsData);
@@ -94,28 +97,46 @@ export default function InventoryPage() {
                   <p className="text-muted-foreground">No hay productos en el inventario.</p>
                 </div>
             ) : (
-              <Table>
-                  <TableHeader>
-                  <TableRow>
-                      <TableHead>Descripción</TableHead>
-                      <TableHead className="hidden sm:table-cell">Tipo</TableHead>
-                      <TableHead className="text-right">Cantidad</TableHead>
-                      <TableHead className="text-right hidden md:table-cell">Costo (C$)</TableHead>
-                      <TableHead className="text-right">Venta (C$)</TableHead>
-                  </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                  {products.map((product) => (
-                      <TableRow key={product.id}>
-                      <TableCell className="font-medium">{product.description}</TableCell>
-                      <TableCell className="hidden sm:table-cell text-muted-foreground">{product.productType}</TableCell>
-                      <TableCell className="text-right">{product.quantity}</TableCell>
-                      <TableCell className="text-right hidden md:table-cell">{product.costPrice.toFixed(2)}</TableCell>
-                      <TableCell className="text-right">{product.sellingPrice.toFixed(2)}</TableCell>
-                      </TableRow>
-                  ))}
-                  </TableBody>
-              </Table>
+              <TooltipProvider>
+                <Table>
+                    <TableHeader>
+                    <TableRow>
+                        <TableHead>Descripción</TableHead>
+                        <TableHead className="hidden sm:table-cell">Tipo</TableHead>
+                        <TableHead className="text-right">Cantidad</TableHead>
+                        <TableHead className="text-right hidden md:table-cell">Stock Mínimo</TableHead>
+                        <TableHead className="text-right hidden md:table-cell">Costo (C$)</TableHead>
+                        <TableHead className="text-right">Venta (C$)</TableHead>
+                    </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                    {products.map((product) => (
+                        <TableRow key={product.id}>
+                        <TableCell className="font-medium">{product.description}</TableCell>
+                        <TableCell className="hidden sm:table-cell text-muted-foreground">{product.productType}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                             {product.quantity <= product.minimumStock && (
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                     <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Stock bajo</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
+                            {product.quantity}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right hidden md:table-cell">{product.minimumStock}</TableCell>
+                        <TableCell className="text-right hidden md:table-cell">{product.costPrice.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">{product.sellingPrice.toFixed(2)}</TableCell>
+                        </TableRow>
+                    ))}
+                    </TableBody>
+                </Table>
+              </TooltipProvider>
             )}
           </CardContent>
         </Card>
