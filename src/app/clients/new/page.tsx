@@ -128,7 +128,7 @@ export default function NewClientPage() {
                     </Link>
                 </Button>
             </div>
-            <Card className="max-w-2xl mx-auto w-full">
+            <Card className="w-full max-w-2xl mx-auto">
             <CardHeader>
                 <CardTitle>Añadir Nuevo Cliente</CardTitle>
                 <CardDescription>
@@ -162,7 +162,7 @@ export default function NewClientPage() {
                         <CardHeader className="pb-4">
                            <CardTitle className="text-lg">Ubicación GPS (Opcional)</CardTitle>
                            <CardDescription>
-                                Obtén la ubicación con el GPS del dispositivo o ingrésala manually.
+                                Obtén la ubicación con el GPS del dispositivo o ingrésala manualmente.
                            </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
