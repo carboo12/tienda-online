@@ -49,7 +49,7 @@ export default function EditProductPage() {
   const [costPrice, setCostPrice] = useState('');
   const [sellingPrice, setSellingPrice] = useState('');
   const [minimumStock, setMinimumStock] = useState('');
-  const [departmentId, setDepartmentId] = useState('');
+  const [departmentId, setDepartmentId] = useState('none');
 
   useEffect(() => {
     if (!app || !productId) return;
@@ -66,7 +66,7 @@ export default function EditProductPage() {
             setCostPrice(data.costPrice.toString());
             setSellingPrice(data.sellingPrice.toString());
             setMinimumStock(data.minimumStock.toString());
-            setDepartmentId(data.departmentId || '');
+            setDepartmentId(data.departmentId || 'none');
         } else {
             toast({ variant: 'destructive', title: 'Error', description: 'Producto no encontrado.' });
             router.push('/inventory');
@@ -115,7 +115,7 @@ export default function EditProductPage() {
         costPrice: parseFloat(costPrice) || 0,
         sellingPrice: parseFloat(sellingPrice) || 0,
         minimumStock: parseInt(minimumStock, 10) || 0,
-        departmentId: departmentId || null,
+        departmentId: departmentId === 'none' ? null : departmentId,
       });
 
       toast({ title: "Producto Actualizado", description: "Los cambios se guardaron exitosamente." });
@@ -175,7 +175,7 @@ export default function EditProductPage() {
                                     <SelectValue placeholder={isLoadingDepartments ? "Cargando..." : "Selecciona un departamento"} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">Sin Departamento</SelectItem>
+                                    <SelectItem value="none">Sin Departamento</SelectItem>
                                     {departments.map(dept => (
                                         <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>
                                     ))}

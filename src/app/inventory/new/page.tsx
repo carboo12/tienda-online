@@ -36,7 +36,7 @@ export default function NewProductPage() {
   const [costPrice, setCostPrice] = useState('');
   const [sellingPrice, setSellingPrice] = useState('');
   const [minimumStock, setMinimumStock] = useState('');
-  const [departmentId, setDepartmentId] = useState('');
+  const [departmentId, setDepartmentId] = useState('none');
 
   useEffect(() => {
     if (!app) return;
@@ -80,7 +80,7 @@ export default function NewProductPage() {
         costPrice: parseFloat(costPrice) || 0,
         sellingPrice: parseFloat(sellingPrice) || 0,
         minimumStock: parseInt(minimumStock, 10) || 0,
-        departmentId: departmentId || null,
+        departmentId: departmentId === 'none' ? null : departmentId,
         createdAt: new Date(),
       });
 
@@ -139,7 +139,7 @@ export default function NewProductPage() {
                                     <SelectValue placeholder={isLoadingDepartments ? "Cargando..." : "Selecciona un departamento"} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">Sin Departamento</SelectItem>
+                                    <SelectItem value="none">Sin Departamento</SelectItem>
                                     {departments.map(dept => (
                                         <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>
                                     ))}
