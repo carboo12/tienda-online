@@ -21,6 +21,8 @@ import {
   ClipboardList,
   Bot,
   UsersRound,
+  FilePenLine,
+  Building2,
 } from 'lucide-react';
 import { UserNav } from './user-nav';
 import { ThemeToggle } from './theme-toggle';
@@ -78,7 +80,7 @@ export function AppShell({ children }: AppShellProps) {
     const navLink = (item: { href: string; icon: React.ElementType; label: string; }) => (
       <Button
         key={item.href}
-        variant={pathname === item.href ? 'secondary' : 'ghost'}
+        variant={pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard') ? 'secondary' : 'ghost'}
         className="justify-start"
         asChild
         onClick={() => isMobile && setMobileNavOpen(false)}

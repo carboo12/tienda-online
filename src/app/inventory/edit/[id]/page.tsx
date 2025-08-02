@@ -9,23 +9,36 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { getFirestore, collection, addDoc, getDocs } from 'firebase/firestore';
-import { Loader2, PlusCircle, ArrowLeft } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { getFirestore, doc, getDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
+import { Loader2, Save, ArrowLeft } from 'lucide-react';
+import { useRouter, useParams } from 'next/navigation';
 import { useState, FormEvent, useEffect } from 'react';
 import Link from 'next/link';
+
+interface ProductData {
+    description: string;
+    productType: string;
+    quantity: number;
+    costPrice: number;
+    sellingPrice: number;
+    minimumStock: number;
+    departmentId?: string;
+}
 
 interface Department {
     id: string;
     name: string;
 }
 
-export default function NewProductPage() {
+export default function EditProductPage() {
   const { app } = useAuth();
   const router = useRouter();
+  const params = useParams();
   const { toast } = useToast();
+  const productId = params.id as string;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoadingDepartments, setIsLoadingDepartments] = useState(true);
 
@@ -39,41 +52,63 @@ export default function NewProductPage() {
   const [departmentId, setDepartmentId] = useState('');
 
   useEffect(() => {
-    if (!app) return;
-    const fetchDepartments = async () => {
-        setIsLoadingDepartments(true);
-        try {
-            const db = getFirestore(app);
-            const departmentsSnapshot = await getDocs(collection(db, 'departments'));
-            const depts = departmentsSnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
-            setDepartments(depts);
-        } catch (error) {
-            toast({ variant: 'destructive', title: 'Error', description: 'No se pudieron cargar los departamentos.' });
-        } finally {
-            setIsLoadingDepartments(false);
+    if (!app || !productId) return;
+    const db = getFirestore(app);
+
+    const fetchProduct = async () => {
+        const productRef = doc(db, 'products', productId);
+        const productSnap = await getDoc(productRef);
+        if (productSnap.exists()) {
+            const data = productSnap.data() as ProductData;
+            setDescription(data.description);
+            setProductType(data.productType);
+            setQuantity(data.quantity.toString());
+            setCostPrice(data.costPrice.toString());
+            setSellingPrice(data.sellingPrice.toString());
+            setMinimumStock(data.minimumStock.toString());
+            setDepartmentId(data.departmentId || '');
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: 'Producto no encontrado.' });
+            router.push('/inventory');
         }
     };
-    fetchDepartments();
-  }, [app, toast]);
+
+    const fetchDepartments = async () => {
+        const departmentsSnapshot = await getDocs(collection(db, 'departments'));
+        const depts = departmentsSnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
+        setDepartments(depts);
+    };
+
+    const loadData = async () => {
+        setIsLoading(true);
+        setIsLoadingDepartments(true);
+        try {
+            await Promise.all([fetchProduct(), fetchDepartments()]);
+        } catch (error) {
+             toast({ variant: 'destructive', title: 'Error', description: 'No se pudo cargar la información necesaria.' });
+        } finally {
+            setIsLoading(false);
+            setIsLoadingDepartments(false);
+        }
+    }
+    
+    loadData();
+  }, [app, productId, router, toast]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!description || !productType || !quantity || !costPrice || !sellingPrice || !minimumStock) {
-        toast({
-            variant: "destructive",
-            title: "Campos Requeridos",
-            description: "Por favor, completa todos los campos del formulario.",
-        });
+    if (!description || !productType || !quantity || !costPrice || !sellingPrice || !minimumStock || !app) {
+        toast({ variant: "destructive", title: "Campos Requeridos" });
         return;
     }
-    if (!app) return;
 
     setIsSubmitting(true);
     
     try {
       const db = getFirestore(app);
+      const productRef = doc(db, 'products', productId);
       
-      await addDoc(collection(db, "products"), {
+      await updateDoc(productRef, {
         description,
         productType,
         quantity: parseInt(quantity, 10) || 0,
@@ -81,27 +116,28 @@ export default function NewProductPage() {
         sellingPrice: parseFloat(sellingPrice) || 0,
         minimumStock: parseInt(minimumStock, 10) || 0,
         departmentId: departmentId || null,
-        createdAt: new Date(),
       });
 
-      toast({
-        title: "Producto Añadido",
-        description: `El producto "${description}" ha sido registrado exitosamente.`,
-      });
-
+      toast({ title: "Producto Actualizado", description: "Los cambios se guardaron exitosamente." });
       router.push('/inventory');
 
     } catch (error) {
-      console.error("Error adding document: ", error);
-      toast({
-        variant: "destructive",
-        title: "Error al Guardar",
-        description: "No se pudo añadir el producto. Por favor, inténtalo de nuevo.",
-      });
+      console.error("Error updating document: ", error);
+      toast({ variant: "destructive", title: "Error al Guardar" });
     } finally {
         setIsSubmitting(false);
     }
   };
+  
+  if (isLoading) {
+    return (
+        <AppShell>
+            <div className="flex h-full w-full items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        </AppShell>
+    )
+  }
 
   return (
     <AppShell>
@@ -116,21 +152,21 @@ export default function NewProductPage() {
             </div>
             <Card className="w-full max-w-2xl mx-auto">
             <CardHeader>
-                <CardTitle>Añadir Nuevo Producto</CardTitle>
+                <CardTitle>Editar Producto</CardTitle>
                 <CardDescription>
-                Completa el formulario para registrar un nuevo producto en el inventario.
+                Modifica los detalles del producto y guarda los cambios.
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="description">Descripción del Producto</Label>
-                        <Input id="description" placeholder="Ej: Gaseosa 3L" value={description} onChange={(e) => setDescription(e.target.value)} required disabled={isSubmitting}/>
+                        <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} required disabled={isSubmitting}/>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="productType">Tipo de Producto</Label>
-                            <Input id="productType" placeholder="Ej: Bebida" value={productType} onChange={(e) => setProductType(e.target.value)} required disabled={isSubmitting}/>
+                            <Input id="productType" value={productType} onChange={(e) => setProductType(e.target.value)} required disabled={isSubmitting}/>
                         </div>
                         <div className="space-y-2">
                              <Label htmlFor="department">Departamento (Opcional)</Label>
@@ -147,31 +183,30 @@ export default function NewProductPage() {
                             </Select>
                         </div>
                     </div>
-                    
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                        <div className="space-y-2">
-                            <Label htmlFor="quantity">Cantidad Inicial</Label>
-                            <Input id="quantity" type="number" placeholder="Ej: 100" value={quantity} onChange={(e) => setQuantity(e.target.value)} required disabled={isSubmitting}/>
+                            <Label htmlFor="quantity">Cantidad</Label>
+                            <Input id="quantity" type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} required disabled={isSubmitting}/>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="minimumStock">Stock Mínimo</Label>
-                            <Input id="minimumStock" type="number" placeholder="Ej: 10" value={minimumStock} onChange={(e) => setMinimumStock(e.target.value)} required disabled={isSubmitting}/>
+                            <Input id="minimumStock" type="number" value={minimumStock} onChange={(e) => setMinimumStock(e.target.value)} required disabled={isSubmitting}/>
                         </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                          <div className="space-y-2">
                             <Label htmlFor="costPrice">Precio de Costo (C$)</Label>
-                            <Input id="costPrice" type="number" step="any" placeholder="Ej: 25.50" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} required disabled={isSubmitting}/>
+                            <Input id="costPrice" type="number" step="any" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} required disabled={isSubmitting}/>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="sellingPrice">Precio de Venta (C$)</Label>
-                            <Input id="sellingPrice" type="number" step="any" placeholder="Ej: 35.00" value={sellingPrice} onChange={(e) => setSellingPrice(e.target.value)} required disabled={isSubmitting}/>
+                            <Input id="sellingPrice" type="number" step="any" value={sellingPrice} onChange={(e) => setSellingPrice(e.target.value)} required disabled={isSubmitting}/>
                         </div>
                     </div>
 
                     <Button type="submit" className="w-full" disabled={isSubmitting}>
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
-                        {isSubmitting ? 'Añadiendo...' : 'Agregar Producto'}
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        {isSubmitting ? 'Guardando...' : 'Guardar Cambios'}
                     </Button>
                 </form>
             </CardContent>

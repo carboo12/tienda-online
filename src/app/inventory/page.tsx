@@ -5,8 +5,8 @@ import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
-import { getFirestore, collection, onSnapshot, query } from 'firebase/firestore';
-import { Loader2, PlusCircle, AlertCircle, History } from 'lucide-react';
+import { getFirestore, collection, onSnapshot, query, doc, getDoc } from 'firebase/firestore';
+import { Loader2, PlusCircle, History, Building2, FilePenLine } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -22,6 +22,8 @@ interface Product {
   costPrice: number;
   sellingPrice: number;
   minimumStock: number;
+  departmentId?: string;
+  departmentName?: string;
 }
 
 export default function InventoryPage() {
@@ -39,21 +41,37 @@ export default function InventoryPage() {
     setIsDataLoading(true);
     const db = getFirestore(app);
     const q = query(collection(db, 'products'));
-    const unsubscribe = onSnapshot(q, 
-      (querySnapshot) => {
+    const unsubscribe = onSnapshot(q, async (querySnapshot) => {
         const productsData: Product[] = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
+        for (const productDoc of querySnapshot.docs) {
+          const data = productDoc.data();
+          let departmentName = 'Sin Departamento';
+
+          if (data.departmentId) {
+             try {
+                const deptDocRef = doc(db, 'departments', data.departmentId);
+                const deptDoc = await getDoc(deptDocRef);
+                if (deptDoc.exists()) {
+                    departmentName = deptDoc.data().name;
+                }
+             } catch (error) {
+                console.error("Error fetching department name:", error);
+                departmentName = 'Error';
+             }
+          }
+
           productsData.push({
-            id: doc.id,
+            id: productDoc.id,
             description: data.description,
             productType: data.productType,
             quantity: data.quantity,
             costPrice: data.costPrice,
             sellingPrice: data.sellingPrice,
             minimumStock: data.minimumStock,
+            departmentId: data.departmentId,
+            departmentName: departmentName
           });
-        });
+        }
         setProducts(productsData);
         setIsDataLoading(false);
       }, 
@@ -78,7 +96,13 @@ export default function InventoryPage() {
                 <Button asChild variant="outline">
                     <Link href="/inventory/kardex">
                         <History className="mr-2 h-4 w-4" />
-                        Kardex de Inventario
+                        Kardex
+                    </Link>
+                </Button>
+                 <Button asChild variant="outline">
+                    <Link href="/inventory/departments">
+                        <Building2 className="mr-2 h-4 w-4" />
+                        Departamentos
                     </Link>
                 </Button>
                 <Button asChild>
@@ -110,18 +134,18 @@ export default function InventoryPage() {
                     <TableHeader>
                     <TableRow>
                         <TableHead>Descripción</TableHead>
-                        <TableHead className="hidden sm:table-cell">Tipo</TableHead>
+                        <TableHead className="hidden sm:table-cell">Departamento</TableHead>
                         <TableHead className="text-right">Cantidad</TableHead>
                         <TableHead className="text-right hidden md:table-cell">Stock Mínimo</TableHead>
-                        <TableHead className="text-right hidden md:table-cell">Costo (C$)</TableHead>
                         <TableHead className="text-right">Venta (C$)</TableHead>
+                        <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
                     </TableHeader>
                     <TableBody>
                     {products.map((product) => (
                         <TableRow key={product.id}>
                         <TableCell className="font-medium">{product.description}</TableCell>
-                        <TableCell className="hidden sm:table-cell text-muted-foreground">{product.productType}</TableCell>
+                        <TableCell className="hidden sm:table-cell text-muted-foreground">{product.departmentName}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
                              {product.quantity <= product.minimumStock && (
@@ -138,8 +162,14 @@ export default function InventoryPage() {
                           </div>
                         </TableCell>
                         <TableCell className="text-right hidden md:table-cell">{product.minimumStock}</TableCell>
-                        <TableCell className="text-right hidden md:table-cell">{product.costPrice.toFixed(2)}</TableCell>
                         <TableCell className="text-right">{product.sellingPrice.toFixed(2)}</TableCell>
+                         <TableCell className="text-right">
+                            <Button variant="ghost" size="icon" asChild>
+                                <Link href={`/inventory/edit/${product.id}`}>
+                                    <FilePenLine className="h-4 w-4" />
+                                </Link>
+                            </Button>
+                        </TableCell>
                         </TableRow>
                     ))}
                     </TableBody>
