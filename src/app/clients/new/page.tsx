@@ -162,7 +162,7 @@ export default function NewClientPage() {
                         <CardHeader className="pb-4">
                            <CardTitle className="text-lg">Ubicación GPS (Opcional)</CardTitle>
                            <CardDescription>
-                                Obtén la ubicación con el GPS del dispositivo o ingrésala manualmente.
+                                Obtén la ubicación con el GPS del dispositivo o ingrésala manually.
                            </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -185,7 +185,7 @@ export default function NewClientPage() {
 
                     <Button type="submit" className="w-full" disabled={isSubmitting}>
                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
-                        {isSubmitting ? 'Añadiendo...' : 'Añadir Cliente'}
+                        {isSubmitting ? 'Añadiendo...' : 'Agregar'}
                     </Button>
                 </form>
             </CardContent>
