@@ -15,8 +15,8 @@ const firebaseConfig = {
   "messagingSenderId": "900084459529"
 };
 
-// Centralized Firebase Initialization
-export const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+// This will be initialized on the client
+let app: FirebaseApp;
 
 export interface User {
   name: string;
@@ -27,7 +27,7 @@ export interface AuthContextType {
   login: (user: User) => void;
   logout: () => void;
   isLoading: boolean;
-  app: FirebaseApp;
+  app: FirebaseApp | null;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -37,9 +37,14 @@ const USER_STORAGE_KEY = 'multishop_user';
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [firebaseApp, setFirebaseApp] = useState<FirebaseApp | null>(null);
   const router = useRouter();
-
+  
   useEffect(() => {
+    // Initialize Firebase only on the client side
+    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    setFirebaseApp(app);
+
     try {
       const storedUser = localStorage.getItem(USER_STORAGE_KEY);
       if (storedUser) {
@@ -65,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [router]);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading, app }}>
+    <AuthContext.Provider value={{ user, login, logout, isLoading, app: firebaseApp }}>
       {children}
     </AuthContext.Provider>
   );

@@ -17,7 +17,6 @@ import { getFirestore, collection, addDoc, Timestamp, onSnapshot, query } from '
 import { CalendarIcon, Loader2, PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, FormEvent } from 'react';
-import { app } from '@/contexts/auth-provider';
 
 interface Store {
   id: string;
@@ -28,10 +27,8 @@ interface Store {
   licenseExpires: Date;
 }
 
-const db = getFirestore(app);
-
 export default function StoresPage() {
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user, isLoading: isAuthLoading, app } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -45,7 +42,7 @@ export default function StoresPage() {
   const [licenseExpires, setLicenseExpires] = useState<Date>();
 
   useEffect(() => {
-    if (isAuthLoading) {
+    if (isAuthLoading || !app) {
       return; 
     }
     if (user?.name !== 'admin') {
@@ -54,6 +51,7 @@ export default function StoresPage() {
     }
     
     setIsDataLoading(true);
+    const db = getFirestore(app);
     const q = query(collection(db, 'stores'));
     const unsubscribe = onSnapshot(q, 
       (querySnapshot) => {
@@ -84,7 +82,7 @@ export default function StoresPage() {
     );
 
     return () => unsubscribe();
-  }, [user, isAuthLoading, router, toast]);
+  }, [user, isAuthLoading, router, toast, app]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -96,10 +94,12 @@ export default function StoresPage() {
         });
         return;
     }
+    if (!app) return;
 
     setIsSubmitting(true);
     
     try {
+      const db = getFirestore(app);
       await addDoc(collection(db, "stores"), {
         name: storeName,
         owner: ownerName,

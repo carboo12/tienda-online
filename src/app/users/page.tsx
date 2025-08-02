@@ -11,7 +11,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { getFirestore, collection, getDocs, onSnapshot, query, addDoc, doc, getDoc } from 'firebase/firestore';
-import { app } from '@/contexts/auth-provider';
 import { Loader2, PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, FormEvent } from 'react';
@@ -30,10 +29,8 @@ interface User {
     storeName: string;
 }
 
-const db = getFirestore(app);
-
 export default function UsersPage() {
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user, isLoading: isAuthLoading, app } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -50,12 +47,13 @@ export default function UsersPage() {
   const [storeId, setStoreId] = useState('unassigned');
 
   useEffect(() => {
-    if (isAuthLoading) return;
+    if (isAuthLoading || !app) return;
     if (user?.name !== 'admin') {
       router.replace('/dashboard');
       return;
     }
 
+    const db = getFirestore(app);
     const fetchStores = async () => {
       try {
         const q = query(collection(db, 'stores'));
@@ -71,11 +69,12 @@ export default function UsersPage() {
     };
 
     fetchStores();
-  }, [user, isAuthLoading, router]);
+  }, [user, isAuthLoading, router, app]);
 
   useEffect(() => {
-    if (user?.name !== 'admin') return;
+    if (user?.name !== 'admin' || !app) return;
 
+    const db = getFirestore(app);
     const unsubscribe = onSnapshot(query(collection(db, 'users')), async (snapshot) => {
       setIsDataLoading(true);
       const usersData: User[] = [];
@@ -111,7 +110,7 @@ export default function UsersPage() {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, app]);
 
 
   const handleAddUser = async (e: FormEvent) => {
@@ -124,8 +123,10 @@ export default function UsersPage() {
         });
         return;
     }
+    if(!app) return;
     setIsSubmitting(true);
     try {
+      const db = getFirestore(app);
       await addDoc(collection(db, "users"), {
         name,
         email,

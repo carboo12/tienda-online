@@ -17,7 +17,6 @@ import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { getFirestore, collection, query, where, getDocs, DocumentData } from 'firebase/firestore';
-import { app } from '@/contexts/auth-provider';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -25,7 +24,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { login, user, isLoading } = useAuth();
+  const { login, user, isLoading, app } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -37,6 +36,14 @@ export default function LoginPage() {
   
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!app) {
+        toast({
+            variant: "destructive",
+            title: "Error de Inicialización",
+            description: "La aplicación aún se está cargando. Por favor, espera un momento.",
+        });
+        return;
+    }
     setIsSubmitting(true);
 
     try {
