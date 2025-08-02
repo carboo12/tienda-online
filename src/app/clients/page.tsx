@@ -81,7 +81,7 @@ export default function ClientsPage() {
   return (
     <AppShell>
       <div className="flex flex-col gap-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold tracking-tight font-headline">Gestión de Clientes</h1>
               <p className="text-muted-foreground">
@@ -113,8 +113,8 @@ export default function ClientsPage() {
                     <TableHeader>
                     <TableRow>
                         <TableHead>Nombre</TableHead>
-                        <TableHead>Teléfono</TableHead>
-                        <TableHead>Cédula</TableHead>
+                        <TableHead className="hidden sm:table-cell">Teléfono</TableHead>
+                        <TableHead className="hidden md:table-cell">Cédula</TableHead>
                         <TableHead className="text-right">Saldo (C$)</TableHead>
                     </TableRow>
                     </TableHeader>
@@ -122,8 +122,8 @@ export default function ClientsPage() {
                     {clients.map((client) => (
                         <TableRow key={client.id}>
                         <TableCell className="font-medium">{client.name}</TableCell>
-                        <TableCell className="text-muted-foreground">{client.phone}</TableCell>
-                        <TableCell className="text-muted-foreground">{client.idNumber}</TableCell>
+                        <TableCell className="hidden sm:table-cell text-muted-foreground">{client.phone}</TableCell>
+                        <TableCell className="hidden md:table-cell text-muted-foreground">{client.idNumber}</TableCell>
                         <TableCell className="text-right">{client.balance.toFixed(2)}</TableCell>
                         </TableRow>
                     ))}
