@@ -23,20 +23,24 @@ import {
 import { UserNav } from './user-nav';
 import { ThemeToggle } from './theme-toggle';
 import { cn } from '@/lib/utils';
+import { Separator } from './ui/separator';
 
 interface AppShellProps {
   children: React.ReactNode;
 }
 
-const navItems = [
+const mainNavItems = [
   { href: '/dashboard', icon: Home, label: 'Panel de Control' },
   { href: '/invoices', icon: FileText, label: 'Facturación' },
   { href: '/inventory', icon: Box, label: 'Inventario' },
   { href: '/orders', icon: Package, label: 'Pedidos' },
   { href: '/reports', icon: BarChart, label: 'Informes IA' },
-  { href: '/stores', icon: Store, label: 'Tiendas', adminOnly: true },
-  { href: '/users', icon: Users, label: 'Usuarios', adminOnly: true },
-  { href: '/log', icon: ClipboardList, label: 'Registro de Acciones', adminOnly: true },
+];
+
+const adminNavItems = [
+  { href: '/stores', icon: Store, label: 'Tiendas' },
+  { href: '/users', icon: Users, label: 'Usuarios' },
+  { href: '/log', icon: ClipboardList, label: 'Registro de Acciones' },
 ];
 
 export function AppShell({ children }: AppShellProps) {
@@ -60,12 +64,8 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   const renderNavLinks = (isMobile = false) => (
-    <nav className={cn("flex flex-col gap-2", isMobile ? "p-4" : "p-2")}>
-      {navItems.map((item) => {
-        if (item.adminOnly && user?.name !== 'admin') {
-          return null;
-        }
-        return (
+    <nav className={cn("flex flex-col gap-1", isMobile ? "p-4" : "p-2")}>
+      {mainNavItems.map((item) => (
           <Button
             key={item.href}
             variant={pathname === item.href ? 'secondary' : 'ghost'}
@@ -78,8 +78,28 @@ export function AppShell({ children }: AppShellProps) {
               {item.label}
             </Link>
           </Button>
-        );
-      })}
+        )
+      )}
+       {user?.name === 'admin' && (
+        <>
+          <Separator className="my-2"/>
+           <h3 className="px-4 py-2 text-xs font-semibold text-muted-foreground tracking-wider uppercase">Administración</h3>
+          {adminNavItems.map((item) => (
+             <Button
+                key={item.href}
+                variant={pathname === item.href ? 'secondary' : 'ghost'}
+                className="justify-start"
+                asChild
+                onClick={() => isMobile && setMobileNavOpen(false)}
+              >
+                <Link href={item.href}>
+                  <item.icon className="mr-2 h-4 w-4" />
+                  {item.label}
+                </Link>
+              </Button>
+          ))}
+        </>
+      )}
     </nav>
   );
 
@@ -110,12 +130,14 @@ export function AppShell({ children }: AppShellProps) {
             <SheetContent side="left" className="flex flex-col p-0">
                <SheetHeader className="border-b p-4">
                 <SheetTitle className="sr-only">Menú de Navegación</SheetTitle>
-                <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-lg">
+                <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-lg" onClick={() => setMobileNavOpen(false)}>
                   <ShoppingBasket className="h-6 w-6 text-primary" />
                   <span className="">MultiTienda</span>
                 </Link>
               </SheetHeader>
-              {renderNavLinks(true)}
+              <div className="overflow-y-auto">
+                {renderNavLinks(true)}
+              </div>
             </SheetContent>
           </Sheet>
           <div className="w-full flex-1">
