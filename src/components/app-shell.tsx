@@ -19,13 +19,13 @@ import {
   Store,
   Users,
   ClipboardList,
-  Bot
+  Bot,
+  UsersRound,
 } from 'lucide-react';
 import { UserNav } from './user-nav';
 import { ThemeToggle } from './theme-toggle';
 import { cn } from '@/lib/utils';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
-import { SheetTitle } from './ui/sheet';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -36,6 +36,7 @@ const mainNavItems = [
   { href: '/invoices', icon: FileText, label: 'Facturación' },
   { href: '/inventory', icon: Box, label: 'Inventario' },
   { href: '/orders', icon: Package, label: 'Pedidos' },
+  { href: '/clients', icon: UsersRound, label: 'Clientes' },
   { href: '/reports', icon: BarChart, label: 'Informes IA' },
 ];
 
