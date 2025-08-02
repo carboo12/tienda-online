@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
 import { getFirestore, collection, onSnapshot, query } from 'firebase/firestore';
-import { Loader2, PlusCircle, AlertCircle } from 'lucide-react';
+import { Loader2, PlusCircle, AlertCircle, History } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -74,12 +74,20 @@ export default function InventoryPage() {
               <h1 className="text-3xl font-bold tracking-tight font-headline">Inventario</h1>
               <p className="text-muted-foreground">Gestiona tus productos y niveles de stock.</p>
             </div>
-            <Button asChild>
-              <Link href="/inventory/new">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Añadir Producto
-              </Link>
-            </Button>
+             <div className="flex gap-2">
+                <Button asChild variant="outline">
+                    <Link href="/inventory/kardex">
+                        <History className="mr-2 h-4 w-4" />
+                        Kardex de Inventario
+                    </Link>
+                </Button>
+                <Button asChild>
+                <Link href="/inventory/new">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Añadir Producto
+                </Link>
+                </Button>
+            </div>
         </div>
       
         <Card className="mt-6">
