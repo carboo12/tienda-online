@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, FileDown, Printer } from 'lucide-react';
 import Link from 'next/link';
+import Papa from 'papaparse';
 
 // Mock data based on the provided image
 const kardexData = [
@@ -38,12 +39,34 @@ const getBadgeVariant = (type: string): BadgeProps['variant'] => {
     }
 }
 
-
 export default function KardexPage() {
+
+  const handleExport = () => {
+    const csv = Papa.unparse(kardexData, {
+        header: true,
+        quotes: true,
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'kardex_movimientos.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+  }
+
+  const handlePrint = () => {
+      window.print();
+  }
+
   return (
     <AppShell>
-      <div className="flex w-full flex-col gap-6">
-         <div>
+      <div className="flex w-full flex-col gap-6" id="kardex-page">
+         <div className="no-print">
             <Button variant="outline" size="sm" asChild>
                 <Link href="/inventory">
                     <ArrowLeft className="mr-2 h-4 w-4" />
@@ -51,7 +74,7 @@ export default function KardexPage() {
                 </Link>
             </Button>
         </div>
-        <Card>
+        <Card id="kardex-card">
           <CardHeader>
             <CardTitle>Historial de Movimientos de Inventario</CardTitle>
             <CardDescription>
@@ -59,7 +82,7 @@ export default function KardexPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex flex-wrap items-end gap-4">
+            <div className="flex flex-wrap items-end gap-4 no-print">
                 <div className="flex-1 min-w-[200px] space-y-2">
                     <label className="text-sm font-medium">Buscar por:</label>
                     <Input placeholder="Cajero, Producto o Departamento" />
@@ -116,12 +139,12 @@ export default function KardexPage() {
                     </TableBody>
                 </Table>
             </div>
-             <div className="flex justify-end gap-2 mt-4">
-                <Button variant="outline">
+             <div className="flex justify-end gap-2 mt-4 no-print">
+                <Button variant="outline" onClick={handleExport}>
                     <FileDown className="mr-2 h-4 w-4" />
                     Exportar movimientos
                 </Button>
-                <Button variant="outline">
+                <Button variant="outline" onClick={handlePrint}>
                     <Printer className="mr-2 h-4 w-4" />
                     Imprimir
                 </Button>
@@ -129,6 +152,28 @@ export default function KardexPage() {
           </CardContent>
         </Card>
       </div>
+
+       <style jsx global>{`
+            @media print {
+                body * {
+                    visibility: hidden;
+                }
+                #kardex-card, #kardex-card * {
+                    visibility: visible;
+                }
+                #kardex-card {
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    width: 100%;
+                    border: none;
+                    box-shadow: none;
+                }
+                .no-print {
+                    display: none;
+                }
+            }
+        `}</style>
     </AppShell>
   );
 }

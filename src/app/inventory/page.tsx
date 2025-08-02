@@ -74,7 +74,7 @@ export default function InventoryPage() {
               <h1 className="text-3xl font-bold tracking-tight font-headline">Inventario</h1>
               <p className="text-muted-foreground">Gestiona tus productos y niveles de stock.</p>
             </div>
-             <div className="flex gap-2">
+             <div className="flex flex-col sm:flex-row gap-2">
                 <Button asChild variant="outline">
                     <Link href="/inventory/kardex">
                         <History className="mr-2 h-4 w-4" />
