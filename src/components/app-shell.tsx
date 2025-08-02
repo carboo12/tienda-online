@@ -51,6 +51,11 @@ export function AppShell({ children }: AppShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileNavOpen, setMobileNavOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -65,8 +70,10 @@ export function AppShell({ children }: AppShellProps) {
       </div>
     );
   }
-
+  
   const renderNavLinks = (isMobile = false) => {
+    if (!isMounted) return null; // Prevent rendering on the server or before client-side hydration
+    
     const isAdmin = user?.name === 'admin';
     
     const navLink = (item: { href: string; icon: React.ElementType; label: string; }) => (
