@@ -91,7 +91,7 @@ export default function ClientsPage() {
             <Button asChild>
               <Link href="/clients/new">
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Añadir Nuevo Cliente
+                Agregar
               </Link>
             </Button>
         </div>
