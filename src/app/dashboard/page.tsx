@@ -21,7 +21,7 @@ export default function DashboardPage() {
   const getCard = (stat: typeof stats[0], index: number) => {
     const isLink = isAdmin || !['/users'].includes(stat.href);
     const cardContent = (
-      <Card key={index} className="shadow-sm hover:shadow-md transition-shadow">
+      <Card className="shadow-sm hover:shadow-md transition-shadow">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
           <stat.icon className="h-4 w-4 text-muted-foreground" />
@@ -35,12 +35,13 @@ export default function DashboardPage() {
 
     if (isLink) {
       return (
-        <Link href={stat.href} className="focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-lg">
+        <Link key={index} href={stat.href} className="focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-lg">
           {cardContent}
         </Link>
       )
     }
-    return cardContent;
+    // The key is passed to cardContent which is a Card component in this case
+    return React.cloneElement(cardContent, { key: index });
   }
 
   return (
