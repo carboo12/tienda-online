@@ -19,6 +19,7 @@ interface Client {
   phone: string;
   idNumber: string;
   balance: number;
+  creditLimit: number;
 }
 
 export default function ClientsPage() {
@@ -48,6 +49,7 @@ export default function ClientsPage() {
             phone: data.phone,
             idNumber: data.idNumber,
             balance: data.balance,
+            creditLimit: data.creditLimit,
           });
         });
         setClients(clientsData);
@@ -115,6 +117,7 @@ export default function ClientsPage() {
                         <TableHead>Nombre</TableHead>
                         <TableHead className="hidden sm:table-cell">Teléfono</TableHead>
                         <TableHead className="hidden md:table-cell">Cédula</TableHead>
+                        <TableHead className="text-right">Límite Crédito (C$)</TableHead>
                         <TableHead className="text-right">Saldo (C$)</TableHead>
                     </TableRow>
                     </TableHeader>
@@ -124,6 +127,7 @@ export default function ClientsPage() {
                         <TableCell className="font-medium">{client.name}</TableCell>
                         <TableCell className="hidden sm:table-cell text-muted-foreground">{client.phone}</TableCell>
                         <TableCell className="hidden md:table-cell text-muted-foreground">{client.idNumber}</TableCell>
+                        <TableCell className="text-right">{client.creditLimit?.toFixed(2) || '0.00'}</TableCell>
                         <TableCell className="text-right">{client.balance.toFixed(2)}</TableCell>
                         </TableRow>
                     ))}

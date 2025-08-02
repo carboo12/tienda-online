@@ -28,6 +28,7 @@ export default function NewClientPage() {
   const [address, setAddress] = useState('');
   const [idNumber, setIdNumber] = useState('');
   const [balance, setBalance] = useState('');
+  const [creditLimit, setCreditLimit] = useState('');
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
 
@@ -66,7 +67,7 @@ export default function NewClientPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!clientName || !phone || !idNumber || !balance) {
+    if (!clientName || !phone || !idNumber || !balance || !creditLimit) {
         toast({
             variant: "destructive",
             title: "Campos Requeridos",
@@ -94,6 +95,7 @@ export default function NewClientPage() {
         address,
         idNumber,
         balance: parseFloat(balance) || 0,
+        creditLimit: parseFloat(creditLimit) || 0,
         location,
         createdAt: new Date(),
       });
@@ -119,7 +121,7 @@ export default function NewClientPage() {
 
   return (
     <AppShell>
-        <div className="flex flex-col gap-6">
+        <div className="flex w-full flex-col gap-6">
             <div>
                 <Button variant="outline" size="sm" asChild>
                     <Link href="/clients">
@@ -153,9 +155,15 @@ export default function NewClientPage() {
                         <Label htmlFor="address">Dirección (Opcional)</Label>
                         <Input id="address" placeholder="Ej: De la rotonda, 2 cuadras al sur" value={address} onChange={(e) => setAddress(e.target.value)} disabled={isSubmitting}/>
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="balance">Saldo Pendiente (C$)</Label>
-                        <Input id="balance" type="number" placeholder="Ej: 1500.50" value={balance} onChange={(e) => setBalance(e.target.value)} required disabled={isSubmitting}/>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="balance">Saldo Pendiente (C$)</Label>
+                            <Input id="balance" type="number" placeholder="Ej: 1500.50" value={balance} onChange={(e) => setBalance(e.target.value)} required disabled={isSubmitting}/>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="creditLimit">Límite de Crédito (C$)</Label>
+                            <Input id="creditLimit" type="number" placeholder="Ej: 5000" value={creditLimit} onChange={(e) => setCreditLimit(e.target.value)} required disabled={isSubmitting}/>
+                        </div>
                     </div>
                     
                     <Card className="bg-muted/50">

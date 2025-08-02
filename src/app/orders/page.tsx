@@ -1,10 +1,81 @@
 
+'use client';
+
 import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { PlusCircle } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
+import { getFirestore, collection, onSnapshot, query, limit } from 'firebase/firestore';
+import { Loader2, PlusCircle, UsersRound } from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 export default function OrdersPage() {
+  const { app, isAuthLoading } = useAuth();
+  const [hasClients, setHasClients] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (isAuthLoading || !app) {
+      return;
+    }
+
+    const db = getFirestore(app);
+    // Query for just one client to check for existence, which is more efficient
+    const q = query(collection(db, 'clients'), limit(1));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        setHasClients(!snapshot.empty);
+        setIsLoading(false);
+    }, (error) => {
+        console.error("Error checking for clients:", error);
+        setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+
+  }, [app, isAuthLoading]);
+
+  if (isLoading || isAuthLoading) {
+    return (
+        <AppShell>
+            <div className="flex h-full w-full items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        </AppShell>
+    );
+  }
+
+  if (!hasClients) {
+    return (
+         <AppShell>
+            <div className="flex flex-col items-center justify-center h-full text-center gap-4 p-4">
+                <Card className="max-w-md w-full">
+                    <CardHeader>
+                        <CardTitle className="flex items-center justify-center gap-2">
+                            <UsersRound className="h-6 w-6" />
+                            No hay Clientes Registrados
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-muted-foreground">
+                            Para crear un pedido, primero debes registrar un cliente en el sistema.
+                        </p>
+                    </CardContent>
+                    <CardFooter>
+                        <Button asChild className="w-full">
+                            <Link href="/clients/new">
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Registrar Cliente
+                            </Link>
+                        </Button>
+                    </CardFooter>
+                </Card>
+            </div>
+        </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <div className="flex items-center justify-between">
