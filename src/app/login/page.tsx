@@ -27,12 +27,6 @@ export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
 
-  useEffect(() => {
-    if (user) {
-      router.replace('/dashboard');
-    }
-  }, [user, router]);
-  
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!app) {
@@ -97,7 +91,7 @@ export default function LoginPage() {
   };
 
 
-  if (isLoading || user) {
+  if (isLoading) {
      return (
       <div className="flex h-screen w-full items-center justify-center">
         <Bot className="h-12 w-12 animate-spin text-primary" />
