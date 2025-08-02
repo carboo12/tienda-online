@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { getFirestore, collection, onSnapshot, query, doc, getDoc } from 'firebase/firestore';
 import { ArrowLeft, FileDown, Printer, Loader2, Package, Warehouse, CircleDollarSign } from 'lucide-react';
 import Link from 'next/link';
-import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 
 interface Product {
@@ -89,18 +89,29 @@ export default function GeneralInventoryReportPage() {
         'Tipo': p.productType,
         'Cantidad': p.quantity,
         'Stock Mínimo': p.minimumStock,
-        'Precio Costo (C$)': p.costPrice.toFixed(2),
-        'Precio Venta (C$)': p.sellingPrice.toFixed(2),
-        'Valor Total (C$)': p.totalValue.toFixed(2),
+        'Precio Costo (C$)': p.costPrice,
+        'Precio Venta (C$)': p.sellingPrice,
+        'Valor Total (C$)': p.totalValue,
     }));
-    const csv = Papa.unparse(dataToExport, { header: true, quotes: true });
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.setAttribute('href', URL.createObjectURL(blob));
-    link.setAttribute('download', `informe_inventario_general_${format(new Date(), 'yyyy-MM-dd')}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventario');
+
+    // Set column widths
+    worksheet['!cols'] = [
+        { wch: 30 }, // Descripción
+        { wch: 20 }, // Departamento
+        { wch: 15 }, // Tipo
+        { wch: 10 }, // Cantidad
+        { wch: 15 }, // Stock Mínimo
+        { wch: 15 }, // Precio Costo
+        { wch: 15 }, // Precio Venta
+        { wch: 15 }, // Valor Total
+    ];
+
+    const fileName = `informe_inventario_general_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
   };
 
   const handlePrint = () => {
@@ -198,7 +209,7 @@ export default function GeneralInventoryReportPage() {
            <CardFooter className="flex justify-end gap-2 mt-4 no-print">
                 <Button variant="outline" onClick={handleExport} disabled={isLoading}>
                     <FileDown className="mr-2 h-4 w-4" />
-                    Exportar a CSV
+                    Exportar a Excel
                 </Button>
                 <Button variant="outline" onClick={handlePrint} disabled={isLoading}>
                     <Printer className="mr-2 h-4 w-4" />
