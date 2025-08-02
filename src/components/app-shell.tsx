@@ -26,6 +26,7 @@ import { UserNav } from './user-nav';
 import { ThemeToggle } from './theme-toggle';
 import { cn } from '@/lib/utils';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
+import { OnlineStatusIndicator } from './online-status-indicator';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -63,7 +64,7 @@ export function AppShell({ children }: AppShellProps) {
     }
   }, [user, isLoading, router]);
 
-  if (isLoading || !user) {
+  if (!isMounted || isLoading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Bot className="h-12 w-12 animate-spin text-primary" />
@@ -72,8 +73,6 @@ export function AppShell({ children }: AppShellProps) {
   }
   
   const renderNavLinks = (isMobile = false) => {
-    if (!isMounted) return null; // Prevent rendering on the server or before client-side hydration
-    
     const isAdmin = user?.name === 'admin';
     
     const navLink = (item: { href: string; icon: React.ElementType; label: string; }) => (
@@ -145,6 +144,7 @@ export function AppShell({ children }: AppShellProps) {
           <div className="w-full flex-1">
             {/* Can add search or breadcrumbs here */}
           </div>
+          <OnlineStatusIndicator />
           <ThemeToggle />
           <UserNav />
         </header>
