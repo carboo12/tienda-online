@@ -11,7 +11,7 @@ const reports = [
         title: 'Informe de Inventario General',
         description: 'Un resumen completo de todos los productos y sus cantidades actuales.',
         icon: Box,
-        href: '#',
+        href: '/reports/inventory-general',
     },
     {
         title: 'Informe de Stock Bajo',
@@ -58,7 +58,7 @@ export default function ReportsPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {reports.map((report, index) => (
-                        <Link href={report.href} key={index}>
+                        <Link href={report.href} key={index} className="group">
                             <Card className="hover:border-primary/80 hover:shadow-lg transition-all h-full flex flex-col">
                                 <CardHeader>
                                     <div className="flex items-start justify-between">
