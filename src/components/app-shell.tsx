@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -6,6 +7,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Separator } from '@/components/ui/separator';
 import {
   BarChart,
   Box,
@@ -22,17 +24,22 @@ import {
 import { UserNav } from './user-nav';
 import { ThemeToggle } from './theme-toggle';
 import { cn } from '@/lib/utils';
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
+import { SheetTitle } from './ui/sheet';
 
 interface AppShellProps {
   children: React.ReactNode;
 }
 
-const navItems = [
+const mainNavItems = [
   { href: '/dashboard', icon: Home, label: 'Panel de Control' },
   { href: '/invoices', icon: FileText, label: 'Facturación' },
   { href: '/inventory', icon: Box, label: 'Inventario' },
   { href: '/orders', icon: Package, label: 'Pedidos' },
   { href: '/reports', icon: BarChart, label: 'Informes IA' },
+];
+
+const adminNavItems = [
   { href: '/stores', icon: Store, label: 'Tiendas' },
   { href: '/users', icon: Users, label: 'Usuarios' },
   { href: '/log', icon: ClipboardList, label: 'Registro de Acciones' },
@@ -60,26 +67,32 @@ export function AppShell({ children }: AppShellProps) {
 
   const renderNavLinks = (isMobile = false) => {
     const isAdmin = user?.name === 'admin';
-    const filteredNavItems = isAdmin
-      ? navItems
-      : navItems.filter(item => !['/stores', '/users', '/log'].includes(item.href));
+    
+    const navLink = (item: { href: string; icon: React.ElementType; label: string; }) => (
+      <Button
+        key={item.href}
+        variant={pathname === item.href ? 'secondary' : 'ghost'}
+        className="justify-start"
+        asChild
+        onClick={() => isMobile && setMobileNavOpen(false)}
+      >
+        <Link href={item.href}>
+          <item.icon className="mr-2 h-4 w-4" />
+          {item.label}
+        </Link>
+      </Button>
+    );
 
     return (
       <nav className={cn("flex flex-col gap-1 p-2", isMobile && "p-4")}>
-        {filteredNavItems.map((item) => (
-          <Button
-            key={item.href}
-            variant={pathname === item.href ? 'secondary' : 'ghost'}
-            className="justify-start"
-            asChild
-            onClick={() => isMobile && setMobileNavOpen(false)}
-          >
-            <Link href={item.href}>
-              <item.icon className="mr-2 h-4 w-4" />
-              {item.label}
-            </Link>
-          </Button>
-        ))}
+        {mainNavItems.map(navLink)}
+        {isAdmin && (
+          <>
+            <Separator className="my-2" />
+            <h4 className="px-3 py-2 text-xs font-semibold text-muted-foreground tracking-wider">Administración</h4>
+            {adminNavItems.map(navLink)}
+          </>
+        )}
       </nav>
     );
   }
