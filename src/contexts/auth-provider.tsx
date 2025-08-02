@@ -15,9 +15,6 @@ const firebaseConfig = {
   "messagingSenderId": "900084459529"
 };
 
-// This will be initialized on the client
-let app: FirebaseApp;
-
 export interface User {
   name: string;
 }
@@ -41,21 +38,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   
   useEffect(() => {
-    // Initialize Firebase only on the client side
-    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    setFirebaseApp(app);
+    // This effect runs only once on the client-side
+    const initialize = async () => {
+      try {
+        // Initialize Firebase
+        const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+        setFirebaseApp(app);
 
-    try {
-      const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+        // Check for stored user
+        const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
+      } catch (error) {
+        console.error("Firebase initialization or user retrieval failed", error);
+        localStorage.removeItem(USER_STORAGE_KEY);
+      } finally {
+        // Set loading to false only after all async operations are done
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Failed to parse user from localStorage", error);
-      localStorage.removeItem(USER_STORAGE_KEY);
-    } finally {
-      setIsLoading(false);
-    }
+    };
+
+    initialize();
   }, []);
 
   const login = useCallback((user: User) => {
