@@ -6,7 +6,7 @@ import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+import { Badge, BadgeProps } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, FileDown, Printer } from 'lucide-react';
@@ -23,18 +23,18 @@ const kardexData = [
   { time: '10:28 am', product: 'PIERNA DE CERDO MEGA', movement: 'Ajuste de inventario #2250', before: '595...', type: 'AJUSTE', quantity: '-11..', after: '5942.202', cashier: 'Ana Belen Or...', department: 'Sin Departamento' },
 ];
 
-const getBadgeVariant = (type: string): 'default' | 'destructive' | 'secondary' | 'outline' => {
+const getBadgeVariant = (type: string): BadgeProps['variant'] => {
     switch (type) {
         case 'ENTRADA':
-            return 'default'; // Greenish in default theme
+            return 'default'; // Green
         case 'SALIDA':
-            return 'destructive'; // Reddish
+            return 'destructive'; // Red
         case 'DEVOLUCION':
-            return 'secondary'; // Bluish/grayish
+            return 'special'; // Purple
         case 'AJUSTE':
-            return 'outline'; // Yellowish/orangish
+            return 'info'; // Blue
         default:
-            return 'default';
+            return 'secondary';
     }
 }
 
