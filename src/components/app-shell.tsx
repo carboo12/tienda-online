@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -110,7 +109,7 @@ export function AppShell({ children }: AppShellProps) {
                 <span className="sr-only">Alternar menú de navegación</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="flex flex-col p-0">
+            <SheetContent side="left" className="flex flex-col p-0" title="Navigation Menu">
                <div className="flex h-14 items-center border-b px-6">
                 <Link href="/dashboard" className="flex items-center gap-2 font-semibold" onClick={() => setMobileNavOpen(false)}>
                   <ShoppingBasket className="h-6 w-6 text-primary" />
