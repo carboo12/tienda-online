@@ -26,6 +26,7 @@ export default function NewUserPage() {
   const { toast } = useToast();
 
   const [stores, setStores] = useState<Store[]>([]);
+  const [isLoadingStores, setIsLoadingStores] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // State for adding a new user
@@ -46,6 +47,7 @@ export default function NewUserPage() {
     if (!app) return;
 
     const fetchStores = async () => {
+      setIsLoadingStores(true);
       try {
         const db = getFirestore(app);
         const q = query(collection(db, 'stores'));
@@ -57,11 +59,18 @@ export default function NewUserPage() {
         setStores(storesData);
       } catch (error) {
         console.error("Error fetching stores:", error);
+        toast({
+            variant: "destructive",
+            title: "Error de Carga",
+            description: "No se pudieron cargar las tiendas.",
+        });
+      } finally {
+        setIsLoadingStores(false);
       }
     };
 
     fetchStores();
-  }, [app]);
+  }, [app, toast]);
   
   const handleAddUser = async (e: FormEvent) => {
     e.preventDefault();
@@ -162,9 +171,9 @@ export default function NewUserPage() {
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="store">Tienda Asignada (Opcional)</Label>
-                      <Select value={storeId} onValueChange={setStoreId} disabled={isSubmitting}>
+                      <Select value={storeId} onValueChange={setStoreId} disabled={isSubmitting || isLoadingStores}>
                         <SelectTrigger id="store">
-                            <SelectValue placeholder="Selecciona una tienda" />
+                            <SelectValue placeholder={isLoadingStores ? "Cargando tiendas..." : "Selecciona una tienda"} />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="unassigned">Sin Asignar (Demo)</SelectItem>
