@@ -8,10 +8,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { getFirestore, collection, onSnapshot, query } from 'firebase/firestore';
-import { Loader2, PlusCircle, FilePenLine } from 'lucide-react';
+import { Loader2, PlusCircle, FilePenLine, Wallet } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { PaymentDialog } from '@/components/payment-dialog';
 
 interface Client {
   id: string;
@@ -29,6 +30,8 @@ export default function ClientsPage() {
 
   const [clients, setClients] = useState<Client[]>([]);
   const [isDataLoading, setIsDataLoading] = useState(true);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
 
   useEffect(() => {
     if (isAuthLoading || !app) {
@@ -68,6 +71,11 @@ export default function ClientsPage() {
 
     return () => unsubscribe();
   }, [user, isAuthLoading, router, toast, app]);
+
+  const handleOpenPaymentDialog = (client: Client) => {
+    setSelectedClient(client);
+    setIsPaymentDialogOpen(true);
+  };
 
 
   if (isAuthLoading) {
@@ -116,7 +124,6 @@ export default function ClientsPage() {
                     <TableRow>
                         <TableHead>Nombre</TableHead>
                         <TableHead className="hidden sm:table-cell">Teléfono</TableHead>
-                        <TableHead className="hidden md:table-cell">Cédula</TableHead>
                         <TableHead className="text-right">Límite Crédito (C$)</TableHead>
                         <TableHead className="text-right">Saldo (C$)</TableHead>
                         <TableHead className="text-right">Acciones</TableHead>
@@ -127,10 +134,12 @@ export default function ClientsPage() {
                         <TableRow key={client.id}>
                         <TableCell className="font-medium">{client.name}</TableCell>
                         <TableCell className="hidden sm:table-cell text-muted-foreground">{client.phone}</TableCell>
-                        <TableCell className="hidden md:table-cell text-muted-foreground">{client.idNumber}</TableCell>
                         <TableCell className="text-right">{client.creditLimit?.toFixed(2) || '0.00'}</TableCell>
                         <TableCell className="text-right">{client.balance.toFixed(2)}</TableCell>
                         <TableCell className="text-right">
+                           <Button variant="ghost" size="icon" onClick={() => handleOpenPaymentDialog(client)}>
+                                <Wallet className="h-4 w-4" />
+                            </Button>
                             <Button variant="ghost" size="icon" asChild>
                                 <Link href={`/clients/edit/${client.id}`}>
                                     <FilePenLine className="h-4 w-4" />
@@ -145,6 +154,13 @@ export default function ClientsPage() {
             </CardContent>
         </Card>
       </div>
+       {selectedClient && (
+            <PaymentDialog
+                isOpen={isPaymentDialogOpen}
+                onClose={() => setIsPaymentDialogOpen(false)}
+                client={selectedClient}
+            />
+        )}
     </AppShell>
   );
 }
