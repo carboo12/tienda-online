@@ -24,6 +24,9 @@ import {
   FilePenLine,
   Building2,
   Wallet,
+  TrendingUp,
+  TrendingDown,
+  UserCheck
 } from 'lucide-react';
 import { UserNav } from './user-nav';
 import { ThemeToggle } from './theme-toggle';

@@ -40,7 +40,7 @@ interface InvoiceItem {
 }
 
 export default function NewInvoicePage() {
-  const { app } = useAuth();
+  const { app, user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -143,7 +143,7 @@ export default function NewInvoicePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedClientId || invoiceItems.length === 0 || !app) {
+    if (!selectedClientId || invoiceItems.length === 0 || !app || !user) {
        toast({ variant: 'destructive', title: 'Factura Incompleta', description: 'Debes seleccionar un cliente y añadir al menos un producto.' });
        return;
     }
@@ -182,6 +182,8 @@ export default function NewInvoicePage() {
             total: invoiceTotal,
             status: 'Pendiente',
             createdAt: Timestamp.now(),
+            createdBy: user.name,
+            creatorRole: user.name === 'admin' ? 'Administrador' : 'Vendedor'
         });
       });
 
