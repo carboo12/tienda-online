@@ -38,9 +38,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   
   useEffect(() => {
-    // This effect should only run once on mount to initialize the app
-    // and determine the initial auth state.
     const initialize = async () => {
+      setIsLoading(true);
       try {
         const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
         setFirebaseApp(app);
@@ -52,7 +51,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } catch (error) {
         console.error("Firebase initialization failed", error);
-        // Even if Firebase fails, we should stop loading.
       } finally {
         // CRITICAL: Ensure isLoading is always set to false after the initial check.
         // This unblocks the rest of the app from rendering.
