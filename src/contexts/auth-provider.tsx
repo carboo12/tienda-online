@@ -39,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   useEffect(() => {
     const initialize = async () => {
+      setIsLoading(true);
       try {
         const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
         setFirebaseApp(app);
