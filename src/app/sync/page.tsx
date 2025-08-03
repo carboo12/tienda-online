@@ -78,6 +78,8 @@ export default function SyncPage() {
         switch (op.type) {
             case 'ADD_CLIENT':
                 return `Añadir cliente: ${op.payload.name}`;
+            case 'ADD_STORE':
+                return `Añadir tienda: ${op.payload.name}`;
             default:
                 return `Operación desconocida`;
         }
@@ -155,4 +157,3 @@ export default function SyncPage() {
         </AppShell>
     );
 }
-

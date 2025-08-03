@@ -17,6 +17,8 @@ import { getFirestore, collection, addDoc, Timestamp, onSnapshot, query } from '
 import { CalendarIcon, Loader2, PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, FormEvent } from 'react';
+import { useOnlineStatus } from '@/hooks/use-online-status';
+import { addPendingOperation } from '@/lib/offline-sync';
 
 interface Store {
   id: string;
@@ -31,6 +33,7 @@ export default function StoresPage() {
   const { user, isLoading: isAuthLoading, app } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const isOnline = useOnlineStatus();
 
   const [stores, setStores] = useState<Store[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -86,49 +89,75 @@ export default function StoresPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!licenseExpires) {
+    if (!licenseExpires || !storeName || !ownerName || !phone) {
         toast({
             variant: "destructive",
-            title: "Campo Requerido",
-            description: "Por favor, selecciona la fecha de vencimiento de la licencia.",
+            title: "Campos Requeridos",
+            description: "Por favor, completa todos los campos obligatorios.",
         });
         return;
     }
-    if (!app) return;
-
-    setIsSubmitting(true);
     
-    try {
-      const db = getFirestore(app);
-      await addDoc(collection(db, "stores"), {
+    setIsSubmitting(true);
+
+    const storeData = {
         name: storeName,
         owner: ownerName,
         phone,
         email,
-        licenseExpires: Timestamp.fromDate(licenseExpires),
-      });
+        licenseExpires: licenseExpires.toISOString(),
+        createdAt: new Date().toISOString(),
+    };
 
-      toast({
-        title: "Tienda Añadida",
-        description: `La tienda "${storeName}" ha sido registrada exitosamente.`,
-      });
+    if (isOnline) {
+        if (!app) {
+            toast({ variant: "destructive", title: "Error de Conexión" });
+            setIsSubmitting(false);
+            return;
+        }
+        try {
+            const db = getFirestore(app);
+            await addDoc(collection(db, "stores"), {
+                ...storeData,
+                licenseExpires: Timestamp.fromDate(new Date(storeData.licenseExpires)),
+            });
 
-      // Reset form
-      setStoreName('');
-      setOwnerName('');
-      setPhone('');
-      setEmail('');
-      setLicenseExpires(undefined);
+            toast({
+                title: "Tienda Añadida",
+                description: `La tienda "${storeName}" ha sido registrada exitosamente.`,
+            });
+            
+            setStoreName('');
+            setOwnerName('');
+            setPhone('');
+            setEmail('');
+            setLicenseExpires(undefined);
 
-    } catch (error) {
-      console.error("Error adding document: ", error);
-      toast({
-        variant: "destructive",
-        title: "Error al Guardar",
-        description: "No se pudo añadir la tienda. Por favor, inténtalo de nuevo.",
-      });
-    } finally {
-        setIsSubmitting(false);
+        } catch (error) {
+            console.error("Error adding document: ", error);
+            toast({ variant: "destructive", title: "Error al Guardar" });
+        } finally {
+            setIsSubmitting(false);
+        }
+    } else {
+        // Offline
+        try {
+            await addPendingOperation({
+                type: 'ADD_STORE',
+                payload: storeData,
+                timestamp: new Date().toISOString()
+            });
+            toast({
+                title: "Tienda Guardada Localmente",
+                description: `Estás sin conexión. La tienda "${storeName}" se ha guardado y se sincronizará cuando vuelvas a estar en línea.`,
+            });
+            router.push('/sync');
+        } catch (error) {
+            console.error("Error saving to offline queue: ", error);
+            toast({ variant: "destructive", title: "Error de Guardado Local" });
+        } finally {
+            setIsSubmitting(false);
+        }
     }
   };
 

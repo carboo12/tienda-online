@@ -1,6 +1,6 @@
 
 import { openDB, DBSchema } from 'idb';
-import { getFirestore, collection, addDoc, GeoPoint } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, GeoPoint, Timestamp } from 'firebase/firestore';
 import { getApps, getApp } from 'firebase/app';
 
 const DB_NAME = 'MultiShopDB';
@@ -9,7 +9,7 @@ const STORE_NAME = 'pendingOperations';
 
 interface PendingOperation {
   id?: number;
-  type: 'ADD_CLIENT' | 'ADD_PRODUCT' | 'CREATE_INVOICE';
+  type: 'ADD_CLIENT' | 'ADD_PRODUCT' | 'CREATE_INVOICE' | 'ADD_STORE';
   payload: any;
   timestamp: string;
 }
@@ -80,6 +80,14 @@ export const processSyncQueue = async (): Promise<{ successCount: number, failur
                 ...clientData,
                 location,
                 createdAt: new Date(clientData.createdAt),
+            });
+            break;
+        case 'ADD_STORE':
+            const storeData = op.payload;
+            await addDoc(collection(db, 'stores'), {
+                ...storeData,
+                licenseExpires: Timestamp.fromDate(new Date(storeData.licenseExpires)),
+                createdAt: new Date(storeData.createdAt),
             });
             break;
         // Add cases for other operation types here
