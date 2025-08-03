@@ -26,7 +26,8 @@ import {
   Wallet,
   TrendingUp,
   TrendingDown,
-  UserCheck
+  UserCheck,
+  RefreshCw,
 } from 'lucide-react';
 import { UserNav } from './user-nav';
 import { ThemeToggle } from './theme-toggle';
@@ -45,6 +46,7 @@ const mainNavItems = [
   { href: '/orders', icon: Package, label: 'Pedidos' },
   { href: '/clients', icon: UsersRound, label: 'Clientes' },
   { href: '/reports', icon: BarChart, label: 'Informes' },
+  { href: '/sync', icon: RefreshCw, label: 'Sincronizar' },
 ];
 
 const adminNavItems = [

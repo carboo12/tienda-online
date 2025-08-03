@@ -13,11 +13,14 @@ import { Loader2, PlusCircle, MapPin, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, FormEvent } from 'react';
 import Link from 'next/link';
+import { useOnlineStatus } from '@/hooks/use-online-status';
+import { addPendingOperation } from '@/lib/offline-sync';
 
 export default function NewClientPage() {
   const { app } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const isOnline = useOnlineStatus();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
@@ -75,47 +78,82 @@ export default function NewClientPage() {
         });
         return;
     }
-    if (!app) return;
-
-    setIsSubmitting(true);
     
-    try {
-      const db = getFirestore(app);
-      let location: GeoPoint | null = null;
-      const lat = parseFloat(latitude);
-      const lon = parseFloat(longitude);
+    setIsSubmitting(true);
 
-      if (!isNaN(lat) && !isNaN(lon)) {
-        location = new GeoPoint(lat, lon);
-      }
+    let locationData: { latitude: number; longitude: number; } | null = null;
+    const lat = parseFloat(latitude);
+    const lon = parseFloat(longitude);
+    if (!isNaN(lat) && !isNaN(lon)) {
+        locationData = { latitude: lat, longitude: lon };
+    }
 
-      await addDoc(collection(db, "clients"), {
+    const clientData = {
         name: clientName,
         phone,
         address,
         idNumber,
         balance: parseFloat(balance) || 0,
         creditLimit: parseFloat(creditLimit) || 0,
-        location,
-        createdAt: new Date(),
-      });
+        location: locationData,
+        createdAt: new Date().toISOString(), // Use ISO string for IndexedDB compatibility
+    };
 
-      toast({
-        title: "Cliente Añadido",
-        description: `El cliente "${clientName}" ha sido registrado exitosamente.`,
-      });
+    if (isOnline) {
+        if (!app) {
+            toast({ variant: "destructive", title: "Error de Conexión", description: "La conexión con la base de datos no está disponible."});
+            setIsSubmitting(false);
+            return;
+        }
+        try {
+            const db = getFirestore(app);
+            const location = clientData.location ? new GeoPoint(clientData.location.latitude, clientData.location.longitude) : null;
+            
+            await addDoc(collection(db, "clients"), {
+                ...clientData,
+                location,
+                createdAt: new Date(clientData.createdAt), // Convert back to Date object for Firestore
+            });
 
-      router.push('/clients');
+            toast({
+                title: "Cliente Añadido",
+                description: `El cliente "${clientName}" ha sido registrado exitosamente.`,
+            });
+            router.push('/clients');
 
-    } catch (error) {
-      console.error("Error adding document: ", error);
-      toast({
-        variant: "destructive",
-        title: "Error al Guardar",
-        description: "No se pudo añadir el cliente. Por favor, inténtalo de nuevo.",
-      });
-    } finally {
-        setIsSubmitting(false);
+        } catch (error) {
+            console.error("Error adding document: ", error);
+            toast({
+                variant: "destructive",
+                title: "Error al Guardar",
+                description: "No se pudo añadir el cliente. Por favor, inténtalo de nuevo.",
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    } else {
+        // We are offline
+        try {
+            await addPendingOperation({
+                type: 'ADD_CLIENT',
+                payload: clientData,
+                timestamp: new Date().toISOString()
+            });
+            toast({
+                title: "Cliente Guardado Localmente",
+                description: `Estás sin conexión. El cliente "${clientName}" se ha guardado y se sincronizará cuando vuelvas a estar en línea.`,
+            });
+            router.push('/clients');
+        } catch (error) {
+            console.error("Error saving to offline queue: ", error);
+            toast({
+                variant: "destructive",
+                title: "Error de Guardado Local",
+                description: "No se pudo guardar el cliente localmente.",
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
     }
   };
 
@@ -193,7 +231,7 @@ export default function NewClientPage() {
 
                     <Button type="submit" className="w-full" disabled={isSubmitting}>
                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
-                        {isSubmitting ? 'Añadiendo...' : 'Agregar'}
+                        {isSubmitting ? 'Guardando...' : 'Agregar'}
                     </Button>
                 </form>
             </CardContent>
