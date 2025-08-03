@@ -38,23 +38,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   
   useEffect(() => {
-    // This effect runs only once on the client-side
     const initialize = async () => {
       try {
-        // Initialize Firebase
         const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
         setFirebaseApp(app);
-
-        // Check for stored user
         const storedUser = localStorage.getItem(USER_STORAGE_KEY);
         if (storedUser) {
           setUser(JSON.parse(storedUser));
         }
       } catch (error) {
-        console.error("Firebase initialization or user retrieval failed", error);
-        localStorage.removeItem(USER_STORAGE_KEY);
+        console.error("Firebase initialization failed", error);
       } finally {
-        // Set loading to false only after all async operations are done
         setIsLoading(false);
       }
     };

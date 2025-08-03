@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, FormEvent, useEffect } from 'react';
@@ -11,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, ShoppingBasket, Bot } from "lucide-react";
+import { Eye, EyeOff, ShoppingBasket, Bot, Loader2 } from "lucide-react";
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -26,6 +27,13 @@ export default function LoginPage() {
   const { login, user, isLoading, app } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+  
+  // If user is already logged in, redirect to dashboard
+  useEffect(() => {
+    if (!isLoading && user) {
+        router.replace('/dashboard');
+    }
+  }, [user, isLoading, router]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -49,12 +57,11 @@ export default function LoginPage() {
         const masterSnapshot = await getDocs(masterQuery);
         
         if (!masterSnapshot.empty) {
-            masterSnapshot.forEach((doc) => {
-                if (doc.data().contraseña === password) {
-                    userFound = true;
-                    userData = doc.data();
-                }
-            });
+            const doc = masterSnapshot.docs[0]; // Assuming unique usernames
+            if (doc.data().contraseña === password) {
+                userFound = true;
+                userData = doc.data();
+            }
         }
 
         // 2. If not found in master, check regular users collection
@@ -63,17 +70,19 @@ export default function LoginPage() {
             const usersSnapshot = await getDocs(usersQuery);
 
             if (!usersSnapshot.empty) {
-                usersSnapshot.forEach((doc) => {
-                    if (doc.data().password === password) {
-                        userFound = true;
-                        userData = doc.data();
-                    }
-                });
+                const doc = usersSnapshot.docs[0]; // Assuming unique emails
+                if (doc.data().password === password) { // In a real app, this should be a hashed password check
+                    userFound = true;
+                    userData = doc.data();
+                }
             }
         }
 
         if (userFound && userData) {
-            login({ name: userData.name || userData.nombre });
+            // The name field might be 'nombre' for masteruser or 'name' for regular users
+            const finalUsername = userData.name || userData.nombre;
+            login({ name: finalUsername });
+            toast({ title: `¡Bienvenido, ${finalUsername}!`});
             router.push('/dashboard');
         } else {
             throw new Error("Credenciales inválidas.");
@@ -91,7 +100,7 @@ export default function LoginPage() {
   };
 
 
-  if (isLoading) {
+  if (isLoading || user) {
      return (
       <div className="flex h-screen w-full items-center justify-center">
         <Bot className="h-12 w-12 animate-spin text-primary" />
@@ -122,6 +131,7 @@ export default function LoginPage() {
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                disabled={isSubmitting}
               />
             </div>
             <div className="grid gap-2">
@@ -136,6 +146,7 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={isSubmitting}
                 />
                 <Button
                   type="button"
@@ -150,6 +161,7 @@ export default function LoginPage() {
               </div>
             </div>
             <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : null}
               {isSubmitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
             </Button>
           </form>

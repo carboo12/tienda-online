@@ -4,18 +4,65 @@
 import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/hooks/use-auth';
+import { getFirestore, collection, onSnapshot, query, orderBy, Timestamp } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
 
-// FAKE DATA
-const invoices = [
-    { id: 'INV-001', client: 'John Doe', date: '2024-05-01', total: 150.75, status: 'Pagada' },
-    { id: 'INV-002', client: 'Jane Smith', date: '2024-05-03', total: 300.00, status: 'Pendiente' },
-    { id: 'INV-003', client: 'Tech Corp', date: '2024-05-05', total: 1250.50, status: 'Vencida' },
-];
-
+interface Invoice {
+  id: string;
+  clientName: string;
+  createdAt: Date;
+  total: number;
+  status: string;
+}
 
 export default function InvoicesPage() {
+  const { app, isAuthLoading } = useAuth();
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (isAuthLoading || !app) return;
+
+    setIsLoading(true);
+    const db = getFirestore(app);
+    const q = query(collection(db, 'invoices'), orderBy('createdAt', 'desc'));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const invoicesData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          clientName: data.clientName,
+          createdAt: (data.createdAt as Timestamp).toDate(),
+          total: data.total,
+          status: data.status,
+        };
+      });
+      setInvoices(invoicesData);
+      setIsLoading(false);
+    }, (error) => {
+      console.error("Error fetching invoices:", error);
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [app, isAuthLoading]);
+
+  const getStatusVariant = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'pagada': return 'default';
+      case 'pendiente': return 'secondary';
+      case 'vencida': return 'destructive';
+      default: return 'outline';
+    }
+  }
+
   return (
     <AppShell>
       <div className="flex items-center justify-between">
@@ -37,13 +84,46 @@ export default function InvoicesPage() {
           <CardDescription>Aquí se mostrará una lista de las facturas recientes.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-96 flex items-center justify-center border-2 border-dashed rounded-lg bg-muted/50">
-            <p className="text-muted-foreground">No hay facturas para mostrar.</p>
-          </div>
+          {isLoading ? (
+             <div className="h-96 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin" />
+             </div>
+          ) : invoices.length === 0 ? (
+            <div className="h-96 flex items-center justify-center border-2 border-dashed rounded-lg bg-muted/50">
+              <p className="text-muted-foreground">No hay facturas para mostrar.</p>
+            </div>
+          ) : (
+             <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Factura ID</TableHead>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Fecha</TableHead>
+                    <TableHead className="text-center">Estado</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {invoices.map((invoice) => (
+                    <TableRow key={invoice.id}>
+                      <TableCell className="font-mono">...{invoice.id.slice(-6)}</TableCell>
+                      <TableCell className="font-medium">{invoice.clientName}</TableCell>
+                      <TableCell>{format(invoice.createdAt, "dd/MM/yyyy")}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={getStatusVariant(invoice.status)}>{invoice.status}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">C$ {invoice.total.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+          )}
         </CardContent>
-        <CardFooter>
-            <p className="text-xs text-muted-foreground">Aquí iría la paginación.</p>
-        </CardFooter>
+        {invoices.length > 0 && (
+          <CardFooter>
+              <p className="text-xs text-muted-foreground">Mostrando las últimas {invoices.length} facturas.</p>
+          </CardFooter>
+        )}
       </Card>
     </AppShell>
   );

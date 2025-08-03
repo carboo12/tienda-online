@@ -28,6 +28,7 @@ import {
   TrendingDown,
   UserCheck,
   RefreshCw,
+  Loader2,
 } from 'lucide-react';
 import { UserNav } from './user-nav';
 import { ThemeToggle } from './theme-toggle';
@@ -60,11 +61,6 @@ export function AppShell({ children }: AppShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileNavOpen, setMobileNavOpen] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -72,10 +68,10 @@ export function AppShell({ children }: AppShellProps) {
     }
   }, [user, isLoading, router]);
 
-  if (!isMounted || isLoading || !user) {
+  if (isLoading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <Bot className="h-12 w-12 animate-spin text-primary" />
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
