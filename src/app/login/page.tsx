@@ -100,9 +100,10 @@ export default function LoginPage() {
   };
 
 
+  // Do not render the form if the auth state is loading or a user is already found
   if (isLoading || user) {
      return (
-      <div className="flex h-screen w-full items-center justify-center">
+      <div className="flex h-screen w-full items-center justify-center bg-background">
         <Bot className="h-12 w-12 animate-spin text-primary" />
       </div>
     );

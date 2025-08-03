@@ -38,18 +38,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   
   useEffect(() => {
+    // This effect should only run once on mount to initialize the app
+    // and determine the initial auth state.
     const initialize = async () => {
-      setIsLoading(true);
       try {
         const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
         setFirebaseApp(app);
+
+        // Check for a stored user in localStorage
         const storedUser = localStorage.getItem(USER_STORAGE_KEY);
         if (storedUser) {
           setUser(JSON.parse(storedUser));
         }
       } catch (error) {
         console.error("Firebase initialization failed", error);
+        // Even if Firebase fails, we should stop loading.
       } finally {
+        // CRITICAL: Ensure isLoading is always set to false after the initial check.
+        // This unblocks the rest of the app from rendering.
         setIsLoading(false);
       }
     };
@@ -65,7 +71,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem(USER_STORAGE_KEY);
-    router.push('/login');
+    // Use router.replace to avoid adding the logged-out page to history
+    router.replace('/login');
   }, [router]);
 
   return (

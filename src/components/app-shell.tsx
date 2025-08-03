@@ -63,15 +63,19 @@ export function AppShell({ children }: AppShellProps) {
   const [isMobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
+    // If auth state is resolved and there's no user, redirect to login
     if (!isLoading && !user) {
       router.replace('/login');
     }
   }, [user, isLoading, router]);
 
+  // While the auth state is loading, or if there's no user yet,
+  // show a full-page loader. This prevents rendering protected content
+  // before the auth check is complete.
   if (isLoading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <Bot className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
