@@ -54,7 +54,6 @@ export function UserNav() {
   useEffect(() => {
     if (!user) return;
     
-    // Determine if user is an admin or has a storeId to view notifications
     const isSuperUser = user.name?.toLowerCase() === 'admin' || user.role === 'Superusuario';
     const isStoreAdmin = user.role === 'Administrador de Tienda';
     if (!isSuperUser && !isStoreAdmin) return;
@@ -64,13 +63,11 @@ export function UserNav() {
     
     let q;
     if (isSuperUser) {
-      // Admin gets all notifications
       q = query(
           collection(db, 'notifications'), 
           orderBy('createdAt', 'desc')
       );
     } else {
-      // Store admin gets only their store's notifications
       q = query(
           collection(db, 'notifications'), 
           where('storeId', '==', user.storeId),
@@ -127,7 +124,7 @@ export function UserNav() {
   const canViewNotifications = isSuperUser || isStoreAdmin;
 
   return (
-    <>
+    <div className="flex items-center gap-4">
         {canViewNotifications && (
             <DropdownMenu onOpenChange={(open) => { if(open && unreadCount > 0) markAllAsRead() }}>
                  <DropdownMenuTrigger asChild>
@@ -195,6 +192,6 @@ export function UserNav() {
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
-    </>
+    </div>
   )
 }

@@ -59,8 +59,6 @@ export function AppShell({ children }: AppShellProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileNavOpen, setMobileNavOpen] = useState(false);
 
-  // useLayoutEffect runs synchronously before the browser paints.
-  // This is crucial to prevent a "flash" of the protected content.
   useLayoutEffect(() => {
     const currentUser = getCurrentUser();
     if (!currentUser) {
@@ -83,14 +81,12 @@ export function AppShell({ children }: AppShellProps) {
       }
     };
     
-    // Request on first visit
     const hasRequested = localStorage.getItem('notificationPermissionRequested');
     if (!hasRequested) {
         requestNotificationPermission();
         localStorage.setItem('notificationPermissionRequested', 'true');
     }
 
-    // Request on app install
     const handleAppInstalled = () => {
       requestNotificationPermission();
     };
