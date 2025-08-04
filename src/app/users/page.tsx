@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { getFirestore, collection, onSnapshot, query, doc, getDoc, initializeFirestore } from 'firebase/firestore';
-import { Loader2, PlusCircle } from 'lucide-react';
+import { Loader2, PlusCircle, FilePenLine } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -103,7 +103,7 @@ export default function UsersPage() {
     return () => unsubscribe();
   }, [user, app]);
 
-  if (isAuthLoading || !user || !(user.name === 'admin' || user.role === 'Superusuario')) {
+  if (isAuthLoading || !(user?.name === 'admin' || user?.role === 'Superusuario')) {
     return (
       <AppShell>
         <div className="flex h-full w-full items-center justify-center">
@@ -152,6 +152,7 @@ export default function UsersPage() {
                             <TableHead className="hidden sm:table-cell">Email</TableHead>
                             <TableHead>Rol</TableHead>
                             <TableHead className="hidden md:table-cell">Tienda</TableHead>
+                            <TableHead className="text-right">Acciones</TableHead>
                         </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -161,6 +162,13 @@ export default function UsersPage() {
                             <TableCell className="hidden sm:table-cell text-muted-foreground">{user.email}</TableCell>
                             <TableCell>{user.role}</TableCell>
                             <TableCell className="hidden md:table-cell text-muted-foreground">{user.storeName}</TableCell>
+                            <TableCell className="text-right">
+                                <Button variant="ghost" size="icon" asChild>
+                                    <Link href={`/users/edit/${user.id}`}>
+                                        <FilePenLine className="h-4 w-4" />
+                                    </Link>
+                                </Button>
+                            </TableCell>
                             </TableRow>
                         ))}
                         </TableBody>
