@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { getFirestore, collection, getDocs, doc, runTransaction, Timestamp } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, doc, runTransaction, Timestamp, query, where } from 'firebase/firestore';
 import { Loader2, PlusCircle, ArrowLeft, Trash2, CreditCard, Coins } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -76,15 +76,33 @@ export default function NewInvoicePage() {
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     const fetchData = async () => {
       setIsLoading(true);
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
       try {
         const db = getFirestore(app);
-        // Fetch Clients
-        const clientsSnapshot = await getDocs(collection(db, 'clients'));
+        const isSuperUser = user.name === 'admin' || user.role === 'Superusuario';
+        
+        let clientQuery, productQuery;
+        if(isSuperUser) {
+            clientQuery = query(collection(db, 'clients'));
+            productQuery = query(collection(db, 'products'));
+        } else if (user.storeId) {
+            clientQuery = query(collection(db, 'clients'), where('storeId', '==', user.storeId));
+            productQuery = query(collection(db, 'products'), where('storeId', '==', user.storeId));
+        } else {
+            setClients([]);
+            setProducts([]);
+            setIsLoading(false);
+            return;
+        }
+
+        const clientsSnapshot = await getDocs(clientQuery);
         const clientsData = clientsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client));
         setClients(clientsData);
 
-        // Fetch Products
-        const productsSnapshot = await getDocs(collection(db, 'products'));
+        const productsSnapshot = await getDocs(productQuery);
         const productsData = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
         setProducts(productsData);
 
@@ -100,7 +118,7 @@ export default function NewInvoicePage() {
       }
     };
     fetchData();
-  }, [toast]);
+  }, [toast, user]);
 
   const handleAddProduct = () => {
     const quantity = typeof currentItemQuantity === 'number' ? currentItemQuantity : parseInt(String(currentItemQuantity), 10);
@@ -190,10 +208,12 @@ export default function NewInvoicePage() {
             const newBalance = clientDoc.data().balance + invoiceTotal;
             transaction.update(clientRef, { balance: newBalance });
         }
-
+        
+        const isSuperUser = user.name === 'admin' || user.role === 'Superusuario';
+        
         // Create invoice document
         const invoiceRef = doc(collection(db, 'invoices'));
-        transaction.set(invoiceRef, {
+        const invoiceData: any = {
             clientId: selectedClientId,
             clientName: clientDoc.data().name,
             items: invoiceItems,
@@ -203,7 +223,13 @@ export default function NewInvoicePage() {
             createdAt: Timestamp.now(),
             createdBy: user.name,
             creatorRole: user.name === 'admin' ? 'Administrador' : 'Vendedor'
-        });
+        };
+
+        if (!isSuperUser && user.storeId) {
+            invoiceData.storeId = user.storeId;
+        }
+
+        transaction.set(invoiceRef, invoiceData);
       });
 
       toast({ title: 'Factura Creada', description: 'La factura ha sido guardada exitosamente.' });

@@ -45,9 +45,9 @@ const mainNavItems = [
 ];
 
 const adminNavItems = [
-  { href: '/stores', icon: Store, label: 'Tiendas' },
+  { href: '/stores', icon: Store, label: 'Tiendas', superOnly: true },
   { href: '/users', icon: Users, label: 'Usuarios' },
-  { href: '/log', icon: ClipboardList, label: 'Registro de Acciones' },
+  { href: '/log', icon: ClipboardList, label: 'Registro de Acciones', superOnly: true },
   { href: '/settings', icon: Settings, label: 'Configuración' },
 ];
 
@@ -109,7 +109,9 @@ export function AppShell({ children }: AppShellProps) {
   }
   
   const renderNavLinks = (isMobile = false) => {
-    const isAdmin = user?.name === 'admin' || user?.role === 'Superusuario';
+    const isSuperUser = user?.name === 'admin' || user?.role === 'Superusuario';
+    const isStoreAdmin = user?.role === 'Administrador de Tienda';
+    const isAdmin = isSuperUser || isStoreAdmin;
     
     const navLink = (item: { href: string; icon: React.ElementType; label: string; }) => (
       <Button
@@ -133,7 +135,10 @@ export function AppShell({ children }: AppShellProps) {
           <>
             <Separator className="my-2" />
             <h4 className="px-3 py-2 text-xs font-semibold text-muted-foreground tracking-wider">Administración</h4>
-            {adminNavItems.map(navLink)}
+            {adminNavItems.map(item => {
+              if (item.superOnly && !isSuperUser) return null;
+              return navLink(item);
+            })}
           </>
         )}
       </nav>

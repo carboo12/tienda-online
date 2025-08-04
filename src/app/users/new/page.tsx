@@ -63,16 +63,16 @@ export default function NewUserPage() {
 
 
   useEffect(() => {
-    const isAdmin = user?.name === 'admin' || user?.role === 'Superusuario';
+    const isAllowed = user?.name === 'admin' || user?.role === 'Superusuario' || user?.role === 'Administrador de Tienda';
     if (isAuthLoading) return;
-    if (!isAdmin) {
+    if (!isAllowed) {
       router.replace('/dashboard');
     }
   }, [user, isAuthLoading, router]);
 
   useEffect(() => {
-    const isAdmin = user?.name === 'admin' || user?.role === 'Superusuario';
-    if (!isAdmin || !app) return;
+    const isSuperUser = user?.name === 'admin' || user?.role === 'Superusuario';
+    if (!isSuperUser || !app) return;
 
     const fetchStores = async () => {
       setIsLoadingStores(true);
@@ -102,7 +102,6 @@ export default function NewUserPage() {
   
   const handleAddUser = async (e: FormEvent) => {
     e.preventDefault();
-    const isAdmin = user?.name === 'admin' || user?.role === 'Superusuario';
     
     if (!username || !name || !email || !password || !role) {
         toast({
@@ -112,7 +111,10 @@ export default function NewUserPage() {
         });
         return;
     }
-    if (role === 'Administrador de Tienda' && storeId === 'unassigned') {
+    const isSuperUser = user?.name === 'admin' || user?.role === 'Superusuario';
+    const finalStoreId = isSuperUser ? storeId : user?.storeId;
+
+    if (role === 'Administrador de Tienda' && (!finalStoreId || finalStoreId === 'unassigned')) {
         toast({
             variant: "destructive",
             title: "Asignación Requerida",
@@ -120,7 +122,7 @@ export default function NewUserPage() {
         });
         return;
     }
-    if(!app || !isAdmin) return;
+    if(!app) return;
     setIsSubmitting(true);
 
     try {
@@ -128,7 +130,7 @@ export default function NewUserPage() {
 
       // Security Check: Ensure only one admin per store
       if (role === 'Administrador de Tienda') {
-        const q = query(collection(db, "users"), where("role", "==", "Administrador de Tienda"), where("storeId", "==", storeId));
+        const q = query(collection(db, "users"), where("role", "==", "Administrador de Tienda"), where("storeId", "==", finalStoreId));
         const existingAdminSnapshot = await getDocs(q);
         if (!existingAdminSnapshot.empty) {
             toast({
@@ -147,8 +149,8 @@ export default function NewUserPage() {
         email,
         contraseña: password,
         role,
-        storeId: storeId === 'unassigned' ? null : storeId,
-        createdBy: user.name, // Log which admin created this user
+        storeId: finalStoreId === 'unassigned' ? null : finalStoreId,
+        createdBy: user?.name, // Log which admin created this user
       });
 
       toast({
@@ -170,7 +172,7 @@ export default function NewUserPage() {
     }
   };
 
-  if (isAuthLoading || !(user?.name === 'admin' || user?.role === 'Superusuario')) {
+  if (isAuthLoading || !(user?.name === 'admin' || user?.role === 'Superusuario' || user?.role === 'Administrador de Tienda')) {
     return (
       <AppShell>
         <div className="flex h-full w-full items-center justify-center">
@@ -179,6 +181,8 @@ export default function NewUserPage() {
       </AppShell>
     );
   }
+
+  const isSuperUser = user?.name === 'admin' || user?.role === 'Superusuario';
 
   return (
     <AppShell>
@@ -243,27 +247,29 @@ export default function NewUserPage() {
                             <SelectValue placeholder="Selecciona un rol" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="Administrador de Tienda">Administrador de Tienda</SelectItem>
+                            {isSuperUser && <SelectItem value="Administrador de Tienda">Administrador de Tienda</SelectItem>}
                             <SelectItem value="Cajero">Cajero</SelectItem>
                             <SelectItem value="Tomador de Pedido">Tomador de Pedido</SelectItem>
                             <SelectItem value="Repartidor">Repartidor</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="store">Tienda Asignada</Label>
-                      <Select value={storeId} onValueChange={setStoreId} disabled={isSubmitting || isLoadingStores}>
-                        <SelectTrigger id="store">
-                            <SelectValue placeholder={isLoadingStores ? "Cargando tiendas..." : "Selecciona una tienda"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="unassigned">Sin Asignar</SelectItem>
-                            {stores.map(store => (
-                                <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+                {isSuperUser && (
+                  <div className="space-y-2">
+                      <Label htmlFor="store">Tienda Asignada</Label>
+                        <Select value={storeId} onValueChange={setStoreId} disabled={isSubmitting || isLoadingStores}>
+                          <SelectTrigger id="store">
+                              <SelectValue placeholder={isLoadingStores ? "Cargando tiendas..." : "Selecciona una tienda"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                              <SelectItem value="unassigned">Sin Asignar</SelectItem>
+                              {stores.map(store => (
+                                  <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                              ))}
+                          </SelectContent>
+                      </Select>
+                  </div>
+                )}
               <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
                 {isSubmitting ? 'Añadiendo...' : 'Añadir Usuario'}

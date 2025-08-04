@@ -6,12 +6,13 @@ import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getFirestore, collection, onSnapshot, query, doc, getDoc, initializeFirestore } from 'firebase/firestore';
+import { getFirestore, collection, onSnapshot, query, doc, getDoc, where } from 'firebase/firestore';
 import { ArrowLeft, FileDown, Printer, Loader2, Package, Warehouse, CircleDollarSign } from 'lucide-react';
 import Link from 'next/link';
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 import { getApp, getApps, initializeApp } from 'firebase/app';
+import { getCurrentUser } from '@/lib/auth';
 
 
 const firebaseConfig = {
@@ -40,6 +41,7 @@ export default function GeneralInventoryReportPage() {
   const [app, setApp] = useState(getApps().length > 0 ? getApp() : null);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const user = getCurrentUser();
 
   useEffect(() => {
     if (!app) {
@@ -48,12 +50,21 @@ export default function GeneralInventoryReportPage() {
   }, [app]);
 
   useEffect(() => {
-    if (!app) return;
+    if (!app || !user) return;
+
+    const db = getFirestore(app);
+    let q;
+    const isSuperUser = user?.name === 'admin' || user?.role === 'Superusuario';
+    if (isSuperUser) {
+        q = query(collection(db, 'products'));
+    } else if (user?.storeId) {
+        q = query(collection(db, 'products'), where('storeId', '==', user.storeId));
+    } else {
+        setIsLoading(false);
+        return;
+    }
 
     setIsLoading(true);
-    const db = getFirestore(app);
-    const q = query(collection(db, 'products'));
-
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
       const productsData: Product[] = [];
       for (const productDoc of querySnapshot.docs) {
@@ -90,7 +101,7 @@ export default function GeneralInventoryReportPage() {
     });
 
     return () => unsubscribe();
-  }, [app]);
+  }, [app, user]);
 
   const reportMetrics = useMemo(() => {
     const totalProducts = products.length;

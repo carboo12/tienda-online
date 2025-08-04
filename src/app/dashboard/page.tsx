@@ -7,7 +7,7 @@ import { AppShell } from '@/components/app-shell';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, Package, Users, ShoppingCart, Loader2 } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth';
-import { getFirestore, collection, onSnapshot } from 'firebase/firestore';
+import { getFirestore, collection, onSnapshot, query, where } from 'firebase/firestore';
 import { getApps, getApp, initializeApp } from 'firebase/app';
 
 
@@ -30,37 +30,50 @@ interface Stats {
 
 export default function DashboardPage() {
   const user = getCurrentUser();
-  const isAdmin = user?.name === 'admin';
+  const isAdmin = user?.name === 'admin' || user?.role === 'Superusuario';
   const [stats, setStats] = useState<Stats>({ totalRevenue: 0, totalProducts: 0, totalClients: 0, activeOrders: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     const db = getFirestore(app);
+    
+    const isSuperUser = user?.name === 'admin' || user?.role === 'Superusuario';
+    
+    const collectionsToQuery = ['invoices', 'products', 'clients'];
+    const unsubscribers = collectionsToQuery.map(col => {
+        let q;
+        if (isSuperUser) {
+            q = query(collection(db, col));
+        } else if (user?.storeId) {
+            q = query(collection(db, col), where('storeId', '==', user.storeId));
+        } else {
+            return () => {}; // No-op if no storeId and not superuser
+        }
+        
+        return onSnapshot(q, (snapshot) => {
+            if (col === 'invoices') {
+                const totalRevenue = snapshot.docs.reduce((sum, doc) => sum + (doc.data().total || 0), 0);
+                setStats(prevStats => ({ ...prevStats, totalRevenue }));
+            }
+            if (col === 'products') {
+                const totalProducts = snapshot.size;
+                setStats(prevStats => ({ ...prevStats, totalProducts }));
+            }
+            if (col === 'clients') {
+                const totalClients = snapshot.size;
+                setStats(prevStats => ({ ...prevStats, totalClients }));
+            }
+            setIsLoading(false);
+        }, (error) => {
+            console.error(`Error fetching ${col}:`, error);
+            setIsLoading(false);
+        });
+    });
 
-    const unsubscribers = [
-      onSnapshot(collection(db, 'invoices'), (snapshot) => {
-        const totalRevenue = snapshot.docs.reduce((sum, doc) => sum + (doc.data().total || 0), 0);
-        setStats(prevStats => ({ ...prevStats, totalRevenue }));
-        setIsLoading(false);
-      }),
-      onSnapshot(collection(db, 'products'), (snapshot) => {
-        const totalProducts = snapshot.size;
-        setStats(prevStats => ({ ...prevStats, totalProducts }));
-        setIsLoading(false);
-      }),
-      onSnapshot(collection(db, 'clients'), (snapshot) => {
-        const totalClients = snapshot.size;
-        setStats(prevStats => ({ ...prevStats, totalClients }));
-        setIsLoading(false);
-      }),
-      // Add listener for orders when implemented
-    ];
-
-    // Cleanup function
     return () => unsubscribers.forEach(unsub => unsub());
     
-  }, []);
+  }, [user]);
   
   const statsCards = [
     { title: 'Ingresos Totales', value: `C$ ${stats.totalRevenue.toFixed(2)}`, icon: DollarSign, href: '/invoices' },

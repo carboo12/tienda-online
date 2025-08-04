@@ -14,6 +14,7 @@ import { useRouter } from 'next/navigation';
 import { useState, FormEvent, useEffect } from 'react';
 import Link from 'next/link';
 import { getApp, getApps, initializeApp } from 'firebase/app';
+import { getCurrentUser } from '@/lib/auth';
 
 
 const firebaseConfig = {
@@ -35,6 +36,7 @@ export default function NewProductPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [app, setApp] = useState(getApps().length > 0 ? getApp() : null);
+  const user = getCurrentUser();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -90,7 +92,7 @@ export default function NewProductPage() {
     try {
       const db = getFirestore(app);
       
-      await addDoc(collection(db, "products"), {
+      const productData: any = {
         description,
         productType,
         quantity: parseInt(quantity, 10) || 0,
@@ -99,7 +101,14 @@ export default function NewProductPage() {
         minimumStock: parseInt(minimumStock, 10) || 0,
         departmentId: departmentId === 'none' ? null : departmentId,
         createdAt: new Date(),
-      });
+      };
+
+      const isSuperUser = user?.name === 'admin' || user?.role === 'Superusuario';
+      if (!isSuperUser && user?.storeId) {
+          productData.storeId = user.storeId;
+      }
+
+      await addDoc(collection(db, "products"), productData);
 
       toast({
         title: "Producto Añadido",

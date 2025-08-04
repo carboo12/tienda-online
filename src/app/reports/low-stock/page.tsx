@@ -10,6 +10,7 @@ import { getFirestore, collection, onSnapshot, query, where, initializeFirestore
 import { ArrowLeft, Loader2, Package, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { getApp, getApps, initializeApp } from 'firebase/app';
+import { getCurrentUser } from '@/lib/auth';
 
 
 const firebaseConfig = {
@@ -33,6 +34,7 @@ export default function LowStockReportPage() {
   const [app, setApp] = useState(getApps().length > 0 ? getApp() : null);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const user = getCurrentUser();
 
   useEffect(() => {
     if (!app) {
@@ -41,14 +43,21 @@ export default function LowStockReportPage() {
   }, [app]);
 
   useEffect(() => {
-    if (!app) return;
+    if (!app || !user) return;
+
+    const db = getFirestore(app);
+    let q;
+    const isSuperUser = user?.name === 'admin' || user?.role === 'Superusuario';
+    if (isSuperUser) {
+        q = query(collection(db, 'products'));
+    } else if (user?.storeId) {
+        q = query(collection(db, 'products'), where('storeId', '==', user.storeId));
+    } else {
+        setIsLoading(false);
+        return;
+    }
 
     setIsLoading(true);
-    const db = getFirestore(app);
-    // This query is inefficient on large datasets without an index.
-    // Firestore will prompt to create a composite index if needed.
-    const q = query(collection(db, 'products'));
-
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const productsData: Product[] = [];
       querySnapshot.forEach((doc) => {
@@ -70,7 +79,7 @@ export default function LowStockReportPage() {
     });
 
     return () => unsubscribe();
-  }, [app]);
+  }, [app, user]);
   
   return (
     <AppShell>

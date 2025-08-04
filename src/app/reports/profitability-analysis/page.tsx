@@ -6,11 +6,12 @@ import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getFirestore, collection, onSnapshot, query, initializeFirestore } from 'firebase/firestore';
+import { getFirestore, collection, onSnapshot, query, where } from 'firebase/firestore';
 import { ArrowLeft, Loader2, Wallet, Percent } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { getApp, getApps, initializeApp } from 'firebase/app';
+import { getCurrentUser } from '@/lib/auth';
 
 
 const firebaseConfig = {
@@ -36,6 +37,7 @@ export default function ProfitabilityAnalysisPage() {
   const [app, setApp] = useState(getApps().length > 0 ? getApp() : null);
   const [products, setProducts] = useState<ProductProfit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const user = getCurrentUser();
 
   useEffect(() => {
     if (!app) {
@@ -44,12 +46,21 @@ export default function ProfitabilityAnalysisPage() {
   }, [app]);
 
   useEffect(() => {
-    if (!app) return;
+    if (!app || !user) return;
+
+    const db = getFirestore(app);
+    let q;
+    const isSuperUser = user?.name === 'admin' || user?.role === 'Superusuario';
+    if (isSuperUser) {
+        q = query(collection(db, 'products'));
+    } else if (user?.storeId) {
+        q = query(collection(db, 'products'), where('storeId', '==', user.storeId));
+    } else {
+        setIsLoading(false);
+        return;
+    }
 
     setIsLoading(true);
-    const db = getFirestore(app);
-    const q = query(collection(db, 'products'));
-
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const productsData: ProductProfit[] = [];
       querySnapshot.forEach((doc) => {
@@ -78,7 +89,7 @@ export default function ProfitabilityAnalysisPage() {
     });
 
     return () => unsubscribe();
-  }, [app]);
+  }, [app, user]);
 
   const getPercentageColor = (percentage: number) => {
     if (percentage >= 50) return 'text-green-600 dark:text-green-400';

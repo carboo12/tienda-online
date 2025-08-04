@@ -4,7 +4,7 @@
 import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { getFirestore, collection, onSnapshot, query, doc, getDoc, initializeFirestore } from 'firebase/firestore';
+import { getFirestore, collection, onSnapshot, query, doc, getDoc, where } from 'firebase/firestore';
 import { Loader2, PlusCircle, History, Building2, FilePenLine, AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getApp, getApps, initializeApp } from 'firebase/app';
+import { getCurrentUser } from '@/lib/auth';
 
 
 const firebaseConfig = {
@@ -40,6 +41,7 @@ export default function InventoryPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [app, setApp] = useState(getApps().length > 0 ? getApp() : null);
+  const user = getCurrentUser();
 
   useEffect(() => {
     if (!app) {
@@ -51,9 +53,20 @@ export default function InventoryPage() {
    useEffect(() => {
     if (!app) return;
     
-    setIsDataLoading(true);
     const db = getFirestore(app);
-    const q = query(collection(db, 'products'));
+    let q;
+    
+    const isSuperUser = user?.name === 'admin' || user?.role === 'Superusuario';
+    if (isSuperUser) {
+        q = query(collection(db, 'products'));
+    } else if (user?.storeId) {
+        q = query(collection(db, 'products'), where('storeId', '==', user.storeId));
+    } else {
+        setIsDataLoading(false);
+        return; // No data to fetch
+    }
+
+    setIsDataLoading(true);
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
         const productsData: Product[] = [];
         for (const productDoc of querySnapshot.docs) {
@@ -95,7 +108,7 @@ export default function InventoryPage() {
     );
 
     return () => unsubscribe();
-  }, [app]);
+  }, [app, user]);
 
   return (
     <AppShell>

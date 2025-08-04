@@ -6,10 +6,11 @@ import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getFirestore, collection, getDocs, query, initializeFirestore } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
 import { ArrowLeft, Loader2, Trophy } from 'lucide-react';
 import Link from 'next/link';
 import { getApp, getApps, initializeApp } from 'firebase/app';
+import { getCurrentUser } from '@/lib/auth';
 
 
 const firebaseConfig = {
@@ -32,6 +33,7 @@ export default function BestSellingProductsReportPage() {
   const [app, setApp] = useState(getApps().length > 0 ? getApp() : null);
   const [soldProducts, setSoldProducts] = useState<SoldProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const user = getCurrentUser();
 
   useEffect(() => {
     if (!app) {
@@ -41,12 +43,24 @@ export default function BestSellingProductsReportPage() {
 
 
   useEffect(() => {
-    if (!app) return;
+    if (!app || !user) return;
 
     const fetchBestSellers = async () => {
       setIsLoading(true);
       const db = getFirestore(app);
-      const invoicesSnapshot = await getDocs(query(collection(db, 'invoices')));
+      
+      let q;
+      const isSuperUser = user?.name === 'admin' || user?.role === 'Superusuario';
+      if (isSuperUser) {
+          q = query(collection(db, 'invoices'));
+      } else if (user?.storeId) {
+          q = query(collection(db, 'invoices'), where('storeId', '==', user.storeId));
+      } else {
+          setIsLoading(false);
+          return;
+      }
+      
+      const invoicesSnapshot = await getDocs(q);
       
       const productQuantities: { [key: string]: { description: string, totalQuantity: number } } = {};
 
@@ -82,7 +96,7 @@ export default function BestSellingProductsReportPage() {
     };
 
     fetchBestSellers();
-  }, [app]);
+  }, [app, user]);
   
   return (
     <AppShell>

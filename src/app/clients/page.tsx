@@ -6,13 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { getFirestore, collection, onSnapshot, query } from 'firebase/firestore';
+import { getFirestore, collection, onSnapshot, query, where } from 'firebase/firestore';
 import { Loader2, PlusCircle, FilePenLine, Wallet } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PaymentDialog } from '@/components/payment-dialog';
 import { getApps, getApp, initializeApp } from 'firebase/app';
+import { getCurrentUser, User as AuthUser } from '@/lib/auth';
 
 const firebaseConfig = {
   "projectId": "multishop-manager-3x6vw",
@@ -35,6 +36,7 @@ interface Client {
 export default function ClientsPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const user = getCurrentUser();
 
   const [clients, setClients] = useState<Client[]>([]);
   const [isDataLoading, setIsDataLoading] = useState(true);
@@ -43,9 +45,20 @@ export default function ClientsPage() {
 
   useEffect(() => {
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    setIsDataLoading(true);
     const db = getFirestore(app);
-    const q = query(collection(db, 'clients'));
+    let q;
+
+    const isSuperUser = user?.name === 'admin' || user?.role === 'Superusuario';
+    if (isSuperUser) {
+      q = query(collection(db, 'clients'));
+    } else if (user?.storeId) {
+      q = query(collection(db, 'clients'), where('storeId', '==', user.storeId));
+    } else {
+      setIsDataLoading(false);
+      return; // No query if user is not superuser and has no storeId
+    }
+
+    setIsDataLoading(true);
     const unsubscribe = onSnapshot(q, 
       (querySnapshot) => {
         const clientsData: Client[] = [];
@@ -75,7 +88,7 @@ export default function ClientsPage() {
     );
 
     return () => unsubscribe();
-  }, [router, toast]);
+  }, [router, toast, user]);
 
   const handleOpenPaymentDialog = (client: Client) => {
     setSelectedClient(client);

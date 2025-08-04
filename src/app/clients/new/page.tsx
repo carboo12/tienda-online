@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { useOnlineStatus } from '@/hooks/use-online-status';
 import { addPendingOperation } from '@/lib/offline-sync';
 import { getApps, getApp, initializeApp } from 'firebase/app';
+import { getCurrentUser } from '@/lib/auth';
 
 const firebaseConfig = {
   "projectId": "multishop-manager-3x6vw",
@@ -29,6 +30,7 @@ export default function NewClientPage() {
   const router = useRouter();
   const { toast } = useToast();
   const isOnline = useOnlineStatus();
+  const user = getCurrentUser();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
@@ -96,7 +98,7 @@ export default function NewClientPage() {
         locationData = { latitude: lat, longitude: lon };
     }
 
-    const clientData = {
+    const clientData: any = {
         name: clientName,
         phone,
         address,
@@ -106,6 +108,12 @@ export default function NewClientPage() {
         location: locationData,
         createdAt: new Date().toISOString(), // Use ISO string for IndexedDB compatibility
     };
+    
+    const isSuperUser = user?.name === 'admin' || user?.role === 'Superusuario';
+    if (!isSuperUser && user?.storeId) {
+        clientData.storeId = user.storeId;
+    }
+
 
     if (isOnline) {
         const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();

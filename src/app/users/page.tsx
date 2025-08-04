@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { getFirestore, collection, onSnapshot, query, doc, getDoc, initializeFirestore } from 'firebase/firestore';
+import { getFirestore, collection, onSnapshot, query, doc, getDoc, where } from 'firebase/firestore';
 import { Loader2, PlusCircle, FilePenLine } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -54,20 +54,30 @@ export default function UsersPage() {
   }, [app]);
 
   useEffect(() => {
-    const isAdmin = user?.name === 'admin' || user?.role === 'Superusuario';
     if (isAuthLoading) return;
-    if (!isAdmin) {
+    const isAllowed = user?.name === 'admin' || user?.role === 'Superusuario' || user?.role === 'Administrador de Tienda';
+    if (!isAllowed) {
       router.replace('/dashboard');
     }
   }, [user, isAuthLoading, router]);
 
 
   useEffect(() => {
-    const isAdmin = user?.name === 'admin' || user?.role === 'Superusuario';
-    if (!isAdmin || !app) return;
+    if (isAuthLoading || !user) return;
+    
+    const db = getFirestore(app!);
+    let q;
+    const isSuperUser = user?.name === 'admin' || user?.role === 'Superusuario';
+    if (isSuperUser) {
+        q = query(collection(db, 'users'));
+    } else if (user?.storeId) {
+        q = query(collection(db, 'users'), where('storeId', '==', user.storeId));
+    } else {
+        setIsDataLoading(false);
+        return; // Not a superuser and no store assigned
+    }
 
-    const db = getFirestore(app);
-    const unsubscribe = onSnapshot(query(collection(db, 'users')), async (snapshot) => {
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
       setIsDataLoading(true);
       const usersData: User[] = [];
       for (const userDoc of snapshot.docs) {
@@ -103,9 +113,9 @@ export default function UsersPage() {
     });
 
     return () => unsubscribe();
-  }, [user, app]);
+  }, [user, app, isAuthLoading]);
 
-  if (isAuthLoading || !(user?.name === 'admin' || user?.role === 'Superusuario')) {
+  if (isAuthLoading || !user || !((user.name === 'admin' || user.role === 'Superusuario' || user.role === 'Administrador de Tienda'))) {
     return (
       <AppShell>
         <div className="flex h-full w-full items-center justify-center">

@@ -6,13 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { PlusCircle, Loader2, CreditCard, Coins } from 'lucide-react';
 import Link from 'next/link';
-import { getFirestore, collection, onSnapshot, query, orderBy, Timestamp } from 'firebase/firestore';
+import { getFirestore, collection, onSnapshot, query, orderBy, Timestamp, where } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { getApps, getApp, initializeApp } from 'firebase/app';
 import { cn } from '@/lib/utils';
+import { getCurrentUser } from '@/lib/auth';
 
 const firebaseConfig = {
   "projectId": "multishop-manager-3x6vw",
@@ -35,13 +36,24 @@ interface Invoice {
 export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const user = getCurrentUser();
 
   useEffect(() => {
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    setIsLoading(true);
     const db = getFirestore(app);
-    const q = query(collection(db, 'invoices'), orderBy('createdAt', 'desc'));
+    let q;
 
+    const isSuperUser = user?.name === 'admin' || user?.role === 'Superusuario';
+    if (isSuperUser) {
+      q = query(collection(db, 'invoices'), orderBy('createdAt', 'desc'));
+    } else if (user?.storeId) {
+      q = query(collection(db, 'invoices'), where('storeId', '==', user.storeId), orderBy('createdAt', 'desc'));
+    } else {
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const invoicesData = snapshot.docs.map(doc => {
         const data = doc.data();
@@ -62,7 +74,7 @@ export default function InvoicesPage() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
