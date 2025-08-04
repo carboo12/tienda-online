@@ -41,38 +41,10 @@ interface Notification {
     type?: string;
 }
 
-// Datos de prueba para demostración
-const mockNotifications: Notification[] = [
-    {
-        id: '1',
-        message: 'Abono de C$ 500.00 registrado para Cliente Frecuente por Ana.',
-        createdAt: new Date(Date.now() - 1000 * 60 * 5), // Hace 5 minutos
-        isRead: false,
-        link: '/clients',
-        type: 'PAYMENT_RECEIVED'
-    },
-    {
-        id: '2',
-        message: 'Nuevo pedido #PED-001 creado para Tienda Central.',
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // Hace 2 horas
-        isRead: false,
-        link: '/orders',
-        type: 'ORDER_CREATED'
-    },
-    {
-        id: '3',
-        message: 'El producto "Gaseosa 3L" tiene bajo stock (quedan 8).',
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // Hace 1 día
-        isRead: true,
-        link: '/inventory',
-        type: 'LOW_STOCK'
-    }
-];
-
 export function UserNav() {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -80,19 +52,18 @@ export function UserNav() {
   }, []);
 
   useEffect(() => {
-    // Mantener los datos de prueba por ahora y simular la cuenta de no leídos
-    const unreadNotifications = notifications.filter(n => !n.isRead).length;
-    setUnreadCount(unreadNotifications);
-
-    // El siguiente código se puede descomentar para volver a usar los datos reales de Firestore
-    /*
-    if (!user?.storeId && user?.name?.toLowerCase() !== 'admin') return;
-
+    if (!user) return;
+    
+    // Determine if user is an admin or has a storeId to view notifications
+    const isSuperUser = user.name?.toLowerCase() === 'admin';
+    const isStoreAdmin = user.role === 'Administrador de Tienda';
+    if (!isSuperUser && !isStoreAdmin) return;
+    
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     const db = getFirestore(app);
     
     let q;
-    if (user.name.toLowerCase() === 'admin') {
+    if (isSuperUser) {
       // Admin gets all notifications
       q = query(
           collection(db, 'notifications'), 
@@ -115,12 +86,13 @@ export function UserNav() {
         } as Notification));
         setNotifications(notifs);
         setUnreadCount(notifs.filter(n => !n.isRead).length);
+    }, (error) => {
+        console.error("Error fetching notifications:", error);
     });
 
     return () => unsubscribe();
-    */
 
-  }, [user, notifications]);
+  }, [user]);
 
   const handleLogout = () => {
     logout();
@@ -129,13 +101,7 @@ export function UserNav() {
 
   const markAllAsRead = async () => {
      if (unreadCount === 0) return;
-     // Simular el marcado como leído para los datos de prueba
-     setTimeout(() => {
-        setNotifications(notifications.map(n => ({ ...n, isRead: true })));
-     }, 500); // Pequeño retraso para que el usuario vea el cambio
 
-    // El siguiente código se puede descomentar para la funcionalidad real
-    /*
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     const db = getFirestore(app);
     const batch = writeBatch(db);
@@ -145,8 +111,11 @@ export function UserNav() {
             batch.update(notifRef, { isRead: true });
         }
     });
-    await batch.commit();
-    */
+    try {
+        await batch.commit();
+    } catch (error) {
+        console.error("Error marking notifications as read:", error);
+    }
   }
 
   if (!user || !user.name) {
