@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { getFirestore, collection, addDoc, getDocs, query, initializeFirestore } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, query, where, initializeFirestore } from 'firebase/firestore';
 import { Loader2, PlusCircle, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, FormEvent } from 'react';
@@ -61,14 +61,16 @@ export default function NewUserPage() {
 
 
   useEffect(() => {
+    const isAdmin = user?.name === 'admin' || user?.role === 'Superusuario';
     if (isAuthLoading) return;
-    if (user?.name !== 'admin') {
+    if (!isAdmin) {
       router.replace('/dashboard');
     }
   }, [user, isAuthLoading, router]);
 
   useEffect(() => {
-    if (!app) return;
+    const isAdmin = user?.name === 'admin' || user?.role === 'Superusuario';
+    if (!isAdmin || !app) return;
 
     const fetchStores = async () => {
       setIsLoadingStores(true);
@@ -94,10 +96,12 @@ export default function NewUserPage() {
     };
 
     fetchStores();
-  }, [app, toast]);
+  }, [user, app, toast]);
   
   const handleAddUser = async (e: FormEvent) => {
     e.preventDefault();
+    const isAdmin = user?.name === 'admin' || user?.role === 'Superusuario';
+    
     if (!name || !email || !password || !role) {
         toast({
             variant: "destructive",
@@ -106,16 +110,42 @@ export default function NewUserPage() {
         });
         return;
     }
-    if(!app) return;
+    if (role === 'Administrador de Tienda' && storeId === 'unassigned') {
+        toast({
+            variant: "destructive",
+            title: "Asignación Requerida",
+            description: "Un Administrador de Tienda debe ser asignado a una tienda existente.",
+        });
+        return;
+    }
+    if(!app || !isAdmin) return;
     setIsSubmitting(true);
+
     try {
       const db = getFirestore(app);
+
+      // Security Check: Ensure only one admin per store
+      if (role === 'Administrador de Tienda') {
+        const q = query(collection(db, "users"), where("role", "==", "Administrador de Tienda"), where("storeId", "==", storeId));
+        const existingAdminSnapshot = await getDocs(q);
+        if (!existingAdminSnapshot.empty) {
+            toast({
+                variant: "destructive",
+                title: "Administrador ya Existe",
+                description: "Esta tienda ya tiene un administrador asignado. Solo se permite uno.",
+            });
+            setIsSubmitting(false);
+            return;
+        }
+      }
+
       await addDoc(collection(db, "users"), {
         name,
         email,
         password, // Ideally, this should be hashed.
         role,
         storeId: storeId === 'unassigned' ? null : storeId,
+        createdBy: user.name, // Log which admin created this user
       });
 
       toast({
@@ -137,7 +167,7 @@ export default function NewUserPage() {
     }
   };
 
-  if (isAuthLoading || user?.name !== 'admin') {
+  if (isAuthLoading || !(user?.name === 'admin' || user?.role === 'Superusuario')) {
     return (
       <AppShell>
         <div className="flex h-full w-full items-center justify-center">
@@ -194,13 +224,13 @@ export default function NewUserPage() {
                     </Select>
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="store">Tienda Asignada (Opcional)</Label>
+                    <Label htmlFor="store">Tienda Asignada</Label>
                       <Select value={storeId} onValueChange={setStoreId} disabled={isSubmitting || isLoadingStores}>
                         <SelectTrigger id="store">
                             <SelectValue placeholder={isLoadingStores ? "Cargando tiendas..." : "Selecciona una tienda"} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="unassigned">Sin Asignar (Demo)</SelectItem>
+                            <SelectItem value="unassigned">Sin Asignar (Para Roles no Admin)</SelectItem>
                             {stores.map(store => (
                                 <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
                             ))}
