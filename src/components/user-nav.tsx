@@ -21,6 +21,7 @@ import { getApps, getApp, initializeApp } from 'firebase/app';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 const firebaseConfig = {
   "projectId": "multishop-manager-3x6vw",
@@ -80,7 +81,8 @@ export function UserNav() {
 
   useEffect(() => {
     // Mantener los datos de prueba por ahora y simular la cuenta de no leídos
-    setUnreadCount(mockNotifications.filter(n => !n.isRead).length);
+    const unreadNotifications = notifications.filter(n => !n.isRead).length;
+    setUnreadCount(unreadNotifications);
 
     // El siguiente código se puede descomentar para volver a usar los datos reales de Firestore
     /*
@@ -118,7 +120,7 @@ export function UserNav() {
     return () => unsubscribe();
     */
 
-  }, [user]);
+  }, [user, notifications]);
 
   const handleLogout = () => {
     logout();
@@ -128,8 +130,9 @@ export function UserNav() {
   const markAllAsRead = async () => {
      if (unreadCount === 0) return;
      // Simular el marcado como leído para los datos de prueba
-     setNotifications(notifications.map(n => ({ ...n, isRead: true })));
-     setUnreadCount(0);
+     setTimeout(() => {
+        setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+     }, 500); // Pequeño retraso para que el usuario vea el cambio
 
     // El siguiente código se puede descomentar para la funcionalidad real
     /*
@@ -174,7 +177,7 @@ export function UserNav() {
                     <DropdownMenuSeparator />
                      {notifications.length > 0 ? (
                         notifications.map(notif => (
-                            <DropdownMenuItem key={notif.id} className="flex flex-col items-start gap-1 whitespace-normal" asChild>
+                            <DropdownMenuItem key={notif.id} className={cn("flex flex-col items-start gap-1 whitespace-normal rounded-lg", !notif.isRead && "bg-primary/5")} asChild>
                                <Link href={notif.link || '#'}>
                                   <p className="text-sm">{notif.message}</p>
                                   <p className="text-xs text-muted-foreground">
