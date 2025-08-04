@@ -7,8 +7,10 @@ import { AppShell } from '@/components/app-shell';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, Package, Users, ShoppingCart, Loader2 } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth';
-import { getFirestore, collection, onSnapshot, query, where } from 'firebase/firestore';
+import { getFirestore, collection, onSnapshot, query, where, Timestamp } from 'firebase/firestore';
 import { getApps, getApp, initializeApp } from 'firebase/app';
+import { RecentSalesChart, SalesData } from '@/components/recent-sales-chart';
+import { format } from 'date-fns';
 
 
 const firebaseConfig = {
@@ -28,10 +30,17 @@ interface Stats {
   activeOrders: number;
 }
 
+interface Invoice {
+    total: number;
+    createdAt: Timestamp;
+}
+
+
 export default function DashboardPage() {
   const user = getCurrentUser();
   const isAdmin = user?.name === 'admin' || user?.role === 'Superusuario';
   const [stats, setStats] = useState<Stats>({ totalRevenue: 0, totalProducts: 0, totalClients: 0, activeOrders: 0 });
+  const [salesData, setSalesData] = useState<SalesData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -53,7 +62,28 @@ export default function DashboardPage() {
         
         return onSnapshot(q, (snapshot) => {
             if (col === 'invoices') {
-                const totalRevenue = snapshot.docs.reduce((sum, doc) => sum + (doc.data().total || 0), 0);
+                const invoices = snapshot.docs.map(doc => doc.data() as Invoice);
+                const totalRevenue = invoices.reduce((sum, doc) => sum + (doc.total || 0), 0);
+                
+                // Process sales data for chart
+                const salesByDay: {[key: string]: number} = {};
+                const sevenDaysAgo = new Date();
+                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+                invoices.forEach(invoice => {
+                    const invoiceDate = invoice.createdAt.toDate();
+                    if (invoiceDate >= sevenDaysAgo) {
+                        const day = format(invoiceDate, 'dd/MM');
+                        salesByDay[day] = (salesByDay[day] || 0) + invoice.total;
+                    }
+                });
+
+                const chartData = Object.keys(salesByDay).map(day => ({
+                    name: day,
+                    total: salesByDay[day]
+                })).sort((a,b) => a.name.localeCompare(b.name));
+
+                setSalesData(chartData);
                 setStats(prevStats => ({ ...prevStats, totalRevenue }));
             }
             if (col === 'products') {
@@ -125,11 +155,14 @@ export default function DashboardPage() {
                 <CardHeader>
                     <CardTitle>Ventas Recientes</CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <p className="text-muted-foreground text-sm">El gráfico de ventas recientes se mostrará aquí.</p>
-                    <div className="h-64 bg-muted/50 rounded-md mt-4 flex items-center justify-center">
-                        [Gráfico de Ventas]
-                    </div>
+                <CardContent className="pl-2">
+                   {isLoading ? (
+                     <div className="h-80 flex items-center justify-center">
+                        <Loader2 className="h-8 w-8 animate-spin" />
+                     </div>
+                   ) : (
+                     <RecentSalesChart data={salesData} />
+                   )}
                 </CardContent>
             </Card>
             <Card className="col-span-full lg:col-span-3">
