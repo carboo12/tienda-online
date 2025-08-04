@@ -27,6 +27,7 @@ import { ThemeToggle } from './theme-toggle';
 import { cn } from '@/lib/utils';
 import { OnlineStatusIndicator } from './online-status-indicator';
 import { getCurrentUser, User as AuthUser } from '@/lib/auth';
+import { useToast } from '@/hooks/use-toast';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -51,6 +52,7 @@ const adminNavItems = [
 export function AppShell({ children }: AppShellProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { toast } = useToast();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileNavOpen, setMobileNavOpen] = useState(false);
@@ -67,6 +69,39 @@ export function AppShell({ children }: AppShellProps) {
     }
   }, [router]);
 
+  useEffect(() => {
+    const requestNotificationPermission = async () => {
+      if ('Notification' in window && Notification.permission === 'default') {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          toast({ title: '¡Genial!', description: 'Recibirás notificaciones importantes.' });
+        } else {
+          toast({ variant: 'destructive', title: 'Notificaciones desactivadas', description: 'Te perderás de actualizaciones importantes. Puedes activarlas luego en la configuración de tu navegador.' });
+        }
+      }
+    };
+    
+    // Request on first visit
+    const hasRequested = localStorage.getItem('notificationPermissionRequested');
+    if (!hasRequested) {
+        requestNotificationPermission();
+        localStorage.setItem('notificationPermissionRequested', 'true');
+    }
+
+    // Request on app install
+    const handleAppInstalled = () => {
+      requestNotificationPermission();
+    };
+
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+        window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+
+  }, [toast]);
+
+
   if (isLoading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
@@ -82,7 +117,7 @@ export function AppShell({ children }: AppShellProps) {
       <Button
         key={item.href}
         variant={pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard') ? 'secondary' : 'ghost'}
-        className="justify-start"
+        className="justify-start w-full text-left"
         asChild
         onClick={() => isMobile && setMobileNavOpen(false)}
       >
