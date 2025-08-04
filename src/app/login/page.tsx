@@ -30,8 +30,7 @@ const firebaseConfig = {
 };
 
 interface UserData extends User {
-    contraseña?: string; // from 'users'
-    password?: string; // from 'masteruser'
+    contraseña?: string;
 }
 
 
@@ -68,8 +67,8 @@ export default function LoginPage() {
         if (!masterSnapshot.empty) {
             const masterDoc = masterSnapshot.docs[0];
             const masterData = masterDoc.data() as UserData;
-            if (masterData.password === password) {
-                const sessionUser: User = { name: masterData.name, role: 'Superusuario', storeId: null };
+            if (masterData.contraseña === password) {
+                const sessionUser: User = { name: masterData.name || 'admin', role: 'Superusuario', storeId: null };
                 login(sessionUser);
                 toast({ title: `¡Bienvenido, ${sessionUser.name}!`});
                 router.push('/dashboard');
@@ -88,7 +87,7 @@ export default function LoginPage() {
         const userDoc = userSnapshot.docs[0];
         const userData = userDoc.data() as UserData;
 
-        if (userData.password !== password) {
+        if (userData.contraseña !== password) {
              throw new Error("Credenciales inválidas.");
         }
 
