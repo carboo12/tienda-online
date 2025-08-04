@@ -95,10 +95,10 @@ export default function OrdersPage() {
 
   return (
     <AppShell>
-      <div className="flex items-center justify-between">
-        <div>
-            <h1 className="text-3xl font-bold tracking-tight font-headline">Pedidos</h1>
-            <p className="text-muted-foreground">Sigue y gestiona los pedidos de los clientes.</p>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex-1">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight font-headline">Pedidos</h1>
+            <p className="text-muted-foreground text-sm md:text-base">Sigue y gestiona los pedidos de los clientes.</p>
         </div>
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" />

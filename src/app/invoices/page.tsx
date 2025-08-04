@@ -72,10 +72,10 @@ export default function InvoicesPage() {
 
   return (
     <AppShell>
-      <div className="flex items-center justify-between">
-        <div>
-            <h1 className="text-3xl font-bold tracking-tight font-headline">Facturación</h1>
-            <p className="text-muted-foreground">Gestiona y sigue todas tus facturas.</p>
+       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex-1">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight font-headline">Facturación</h1>
+            <p className="text-muted-foreground text-sm md:text-base">Gestiona y sigue todas tus facturas.</p>
         </div>
         <Button asChild>
           <Link href="/invoices/new">
@@ -100,12 +100,13 @@ export default function InvoicesPage() {
               <p className="text-muted-foreground">No hay facturas para mostrar.</p>
             </div>
           ) : (
+            <div className="overflow-x-auto">
              <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Factura ID</TableHead>
                     <TableHead>Cliente</TableHead>
-                    <TableHead>Fecha</TableHead>
+                    <TableHead className="hidden sm:table-cell">Fecha</TableHead>
                     <TableHead className="text-center">Estado</TableHead>
                     <TableHead className="text-right">Total</TableHead>
                   </TableRow>
@@ -113,9 +114,9 @@ export default function InvoicesPage() {
                 <TableBody>
                   {invoices.map((invoice) => (
                     <TableRow key={invoice.id}>
-                      <TableCell className="font-mono">...{invoice.id.slice(-6)}</TableCell>
+                      <TableCell className="font-mono text-xs">...{invoice.id.slice(-6)}</TableCell>
                       <TableCell className="font-medium">{invoice.clientName}</TableCell>
-                      <TableCell>{format(invoice.createdAt, "dd/MM/yyyy")}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{format(invoice.createdAt, "dd/MM/yyyy")}</TableCell>
                       <TableCell className="text-center">
                         <Badge variant={getStatusVariant(invoice.status)}>{invoice.status}</Badge>
                       </TableCell>
@@ -124,6 +125,7 @@ export default function InvoicesPage() {
                   ))}
                 </TableBody>
               </Table>
+            </div>
           )}
         </CardContent>
         {invoices.length > 0 && (

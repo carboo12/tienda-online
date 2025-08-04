@@ -200,8 +200,8 @@ export default function StoresPage() {
     <AppShell>
       <div className="flex flex-col gap-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight font-headline">Gestión de Tiendas</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight font-headline">Gestión de Tiendas</h1>
+          <p className="text-muted-foreground text-sm md:text-base">
             Añade, edita y gestiona las tiendas de tus clientes.
           </p>
         </div>
@@ -281,26 +281,28 @@ export default function StoresPage() {
                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                    </div>
                  ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nombre Tienda</TableHead>
-                        <TableHead>Dueño/a</TableHead>
-                        <TableHead>Teléfono</TableHead>
-                        <TableHead>Vencimiento</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {stores.map((store) => (
-                        <TableRow key={store.id}>
-                          <TableCell className="font-medium">{store.name}</TableCell>
-                          <TableCell>{store.owner}</TableCell>
-                          <TableCell className="text-muted-foreground">{store.phone}</TableCell>
-                          <TableCell>{format(store.licenseExpires, "dd/MM/yyyy")}</TableCell>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nombre Tienda</TableHead>
+                          <TableHead className="hidden sm:table-cell">Dueño/a</TableHead>
+                          <TableHead className="hidden md:table-cell">Teléfono</TableHead>
+                          <TableHead>Vencimiento</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {stores.map((store) => (
+                          <TableRow key={store.id}>
+                            <TableCell className="font-medium">{store.name}</TableCell>
+                            <TableCell className="hidden sm:table-cell">{store.owner}</TableCell>
+                            <TableCell className="hidden md:table-cell text-muted-foreground">{store.phone}</TableCell>
+                            <TableCell>{format(store.licenseExpires, "dd/MM/yyyy")}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                  )}
               </CardContent>
             </Card>

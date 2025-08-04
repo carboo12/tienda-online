@@ -114,10 +114,10 @@ export default function UsersPage() {
   return (
     <AppShell>
       <div className="flex flex-col gap-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight font-headline">Gestión de Usuarios</h1>
-            <p className="text-muted-foreground">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex-1">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight font-headline">Gestión de Usuarios</h1>
+            <p className="text-muted-foreground text-sm md:text-base">
               Añade, edita y gestiona los usuarios del sistema.
             </p>
           </div>
@@ -142,26 +142,28 @@ export default function UsersPage() {
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
                 ) : (
-                <Table>
-                    <TableHeader>
-                    <TableRow>
-                        <TableHead>Nombre</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Rol</TableHead>
-                        <TableHead>Tienda</TableHead>
-                    </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                    {users.map((user) => (
-                        <TableRow key={user.id}>
-                        <TableCell className="font-medium">{user.name}</TableCell>
-                        <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                        <TableCell>{user.role}</TableCell>
-                        <TableCell className="text-muted-foreground">{user.storeName}</TableCell>
+                <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                        <TableRow>
+                            <TableHead>Nombre</TableHead>
+                            <TableHead className="hidden sm:table-cell">Email</TableHead>
+                            <TableHead>Rol</TableHead>
+                            <TableHead className="hidden md:table-cell">Tienda</TableHead>
                         </TableRow>
-                    ))}
-                    </TableBody>
-                </Table>
+                        </TableHeader>
+                        <TableBody>
+                        {users.map((user) => (
+                            <TableRow key={user.id}>
+                            <TableCell className="font-medium">{user.name}</TableCell>
+                            <TableCell className="hidden sm:table-cell text-muted-foreground">{user.email}</TableCell>
+                            <TableCell>{user.role}</TableCell>
+                            <TableCell className="hidden md:table-cell text-muted-foreground">{user.storeName}</TableCell>
+                            </TableRow>
+                        ))}
+                        </TableBody>
+                    </Table>
+                </div>
                 )}
             </CardContent>
         </Card>

@@ -96,10 +96,10 @@ export default function ClientsPage() {
   return (
     <AppShell>
       <div className="flex flex-col gap-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight font-headline">Gestión de Clientes</h1>
-              <p className="text-muted-foreground">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex-1">
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight font-headline">Gestión de Clientes</h1>
+              <p className="text-muted-foreground text-sm md:text-base">
                 Consulta y gestiona los clientes de tu negocio.
               </p>
             </div>
@@ -124,37 +124,37 @@ export default function ClientsPage() {
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
                 ) : (
-                <Table>
-                    <TableHeader>
-                    <TableRow>
-                        <TableHead>Nombre</TableHead>
-                        <TableHead className="hidden sm:table-cell">Teléfono</TableHead>
-                        <TableHead className="text-right">Límite Crédito (C$)</TableHead>
-                        <TableHead className="text-right">Saldo (C$)</TableHead>
-                        <TableHead className="text-right">Acciones</TableHead>
-                    </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                    {clients.map((client) => (
-                        <TableRow key={client.id}>
-                        <TableCell className="font-medium">{client.name}</TableCell>
-                        <TableCell className="hidden sm:table-cell text-muted-foreground">{client.phone}</TableCell>
-                        <TableCell className="text-right">{client.creditLimit?.toFixed(2) || '0.00'}</TableCell>
-                        <TableCell className="text-right">{client.balance.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">
-                           <Button variant="ghost" size="icon" onClick={() => handleOpenPaymentDialog(client)}>
-                                <Wallet className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" asChild>
-                                <Link href={`/clients/edit/${client.id}`}>
-                                    <FilePenLine className="h-4 w-4" />
-                                </Link>
-                            </Button>
-                        </TableCell>
+                <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                        <TableRow>
+                            <TableHead>Nombre</TableHead>
+                            <TableHead className="hidden sm:table-cell">Teléfono</TableHead>
+                            <TableHead className="text-right">Saldo (C$)</TableHead>
+                            <TableHead className="text-right">Acciones</TableHead>
                         </TableRow>
-                    ))}
-                    </TableBody>
-                </Table>
+                        </TableHeader>
+                        <TableBody>
+                        {clients.map((client) => (
+                            <TableRow key={client.id}>
+                            <TableCell className="font-medium">{client.name}</TableCell>
+                            <TableCell className="hidden sm:table-cell text-muted-foreground">{client.phone}</TableCell>
+                            <TableCell className="text-right">{client.balance.toFixed(2)}</TableCell>
+                            <TableCell className="text-right">
+                               <Button variant="ghost" size="icon" onClick={() => handleOpenPaymentDialog(client)}>
+                                    <Wallet className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" asChild>
+                                    <Link href={`/clients/edit/${client.id}`}>
+                                        <FilePenLine className="h-4 w-4" />
+                                    </Link>
+                                </Button>
+                            </TableCell>
+                            </TableRow>
+                        ))}
+                        </TableBody>
+                    </Table>
+                </div>
                 )}
             </CardContent>
         </Card>

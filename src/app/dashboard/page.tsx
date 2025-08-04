@@ -104,34 +104,34 @@ export default function DashboardPage() {
     <AppShell>
       <div className="flex flex-col gap-4">
         <header>
-          <h1 className="text-3xl font-bold tracking-tight font-headline">Panel de Control</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight font-headline">Panel de Control</h1>
+          <p className="text-muted-foreground text-sm md:text-base">
             Un resumen de las operaciones de tu negocio.
           </p>
         </header>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {statsCards.map(getCard)}
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="col-span-4">
+            <Card className="col-span-full lg:col-span-4">
                 <CardHeader>
                     <CardTitle>Ventas Recientes</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-muted-foreground">El gráfico de ventas recientes se mostrará aquí.</p>
+                    <p className="text-muted-foreground text-sm">El gráfico de ventas recientes se mostrará aquí.</p>
                     <div className="h-64 bg-muted/50 rounded-md mt-4 flex items-center justify-center">
                         [Gráfico de Ventas]
                     </div>
                 </CardContent>
             </Card>
-            <Card className="col-span-3">
+            <Card className="col-span-full lg:col-span-3">
                 <CardHeader>
                     <CardTitle>Pedidos Recientes</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-muted-foreground">Aquí aparecerá una lista de los pedidos recientes.</p>
+                    <p className="text-muted-foreground text-sm">Aquí aparecerá una lista de los pedidos recientes.</p>
                      <div className="h-64 bg-muted/50 rounded-md mt-4 flex items-center justify-center">
                         [Lista de Pedidos]
                     </div>

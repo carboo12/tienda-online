@@ -5,7 +5,7 @@ import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { getFirestore, collection, onSnapshot, query, doc, getDoc, initializeFirestore } from 'firebase/firestore';
-import { Loader2, PlusCircle, History, Building2, FilePenLine } from 'lucide-react';
+import { Loader2, PlusCircle, History, Building2, FilePenLine, AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -100,25 +100,25 @@ export default function InventoryPage() {
   return (
     <AppShell>
       <div className="flex flex-col gap-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight font-headline">Inventario</h1>
-              <p className="text-muted-foreground">Gestiona tus productos y niveles de stock.</p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex-1">
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight font-headline">Inventario</h1>
+              <p className="text-muted-foreground text-sm md:text-base">Gestiona tus productos y niveles de stock.</p>
             </div>
-             <div className="flex flex-col sm:flex-row gap-2">
-                <Button asChild variant="outline">
+             <div className="flex flex-wrap items-center gap-2">
+                <Button asChild variant="outline" size="sm">
                     <Link href="/inventory/kardex">
                         <History className="mr-2 h-4 w-4" />
                         Kardex
                     </Link>
                 </Button>
-                 <Button asChild variant="outline">
+                 <Button asChild variant="outline" size="sm">
                     <Link href="/inventory/departments">
                         <Building2 className="mr-2 h-4 w-4" />
                         Departamentos
                     </Link>
                 </Button>
-                <Button asChild>
+                <Button asChild size="sm">
                 <Link href="/inventory/new">
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Añadir Producto
@@ -127,7 +127,7 @@ export default function InventoryPage() {
             </div>
         </div>
       
-        <Card className="mt-6">
+        <Card>
           <CardHeader>
             <CardTitle>Lista de Productos</CardTitle>
             <CardDescription>Aquí se mostrará una lista de tus productos.</CardDescription>
@@ -143,50 +143,52 @@ export default function InventoryPage() {
                 </div>
             ) : (
               <TooltipProvider>
-                <Table>
-                    <TableHeader>
-                    <TableRow>
-                        <TableHead>Descripción</TableHead>
-                        <TableHead className="hidden sm:table-cell">Departamento</TableHead>
-                        <TableHead className="text-right">Cantidad</TableHead>
-                        <TableHead className="text-right hidden md:table-cell">Stock Mínimo</TableHead>
-                        <TableHead className="text-right">Venta (C$)</TableHead>
-                        <TableHead className="text-right">Acciones</TableHead>
-                    </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                    {products.map((product) => (
-                        <TableRow key={product.id}>
-                        <TableCell className="font-medium">{product.description}</TableCell>
-                        <TableCell className="hidden sm:table-cell text-muted-foreground">{product.departmentName}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                             {product.quantity <= product.minimumStock && (
-                                <Tooltip>
-                                  <TooltipTrigger>
-                                     <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Stock bajo</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              )}
-                            {product.quantity}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right hidden md:table-cell">{product.minimumStock}</TableCell>
-                        <TableCell className="text-right">{product.sellingPrice.toFixed(2)}</TableCell>
-                         <TableCell className="text-right">
-                            <Button variant="ghost" size="icon" asChild>
-                                <Link href={`/inventory/edit/${product.id}`}>
-                                    <FilePenLine className="h-4 w-4" />
-                                </Link>
-                            </Button>
-                        </TableCell>
+                <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                        <TableRow>
+                            <TableHead>Descripción</TableHead>
+                            <TableHead className="hidden sm:table-cell">Departamento</TableHead>
+                            <TableHead className="text-right">Cantidad</TableHead>
+                            <TableHead className="text-right hidden md:table-cell">Stock Mínimo</TableHead>
+                            <TableHead className="text-right">Venta (C$)</TableHead>
+                            <TableHead className="text-right">Acciones</TableHead>
                         </TableRow>
-                    ))}
-                    </TableBody>
-                </Table>
+                        </TableHeader>
+                        <TableBody>
+                        {products.map((product) => (
+                            <TableRow key={product.id} className={product.quantity <= product.minimumStock ? 'bg-red-50/50 dark:bg-red-900/10' : ''}>
+                            <TableCell className="font-medium">{product.description}</TableCell>
+                            <TableCell className="hidden sm:table-cell text-muted-foreground">{product.departmentName}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                 {product.quantity <= product.minimumStock && (
+                                    <Tooltip>
+                                      <TooltipTrigger>
+                                         <AlertTriangle className="h-4 w-4 text-red-500" />
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Stock bajo</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  )}
+                                {product.quantity}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right hidden md:table-cell">{product.minimumStock}</TableCell>
+                            <TableCell className="text-right">{product.sellingPrice.toFixed(2)}</TableCell>
+                             <TableCell className="text-right">
+                                <Button variant="ghost" size="icon" asChild>
+                                    <Link href={`/inventory/edit/${product.id}`}>
+                                        <FilePenLine className="h-4 w-4" />
+                                    </Link>
+                                </Button>
+                            </TableCell>
+                            </TableRow>
+                        ))}
+                        </TableBody>
+                    </Table>
+                </div>
               </TooltipProvider>
             )}
           </CardContent>
