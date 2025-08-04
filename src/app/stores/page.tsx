@@ -20,6 +20,7 @@ import { useOnlineStatus } from '@/hooks/use-online-status';
 import { addPendingOperation } from '@/lib/offline-sync';
 import { getCurrentUser } from '@/lib/auth';
 import { getApp, getApps, initializeApp } from 'firebase/app';
+import Link from 'next/link';
 
 
 const firebaseConfig = {
