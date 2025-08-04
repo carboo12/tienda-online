@@ -183,9 +183,11 @@ export function AppShell({ children }: AppShellProps) {
           <div className="w-full flex-1">
             {/* Can add search or breadcrumbs here */}
           </div>
-          <OnlineStatusIndicator />
-          <ThemeToggle />
-          <UserNav />
+          <div className="flex items-center gap-4">
+             <OnlineStatusIndicator />
+             <UserNav />
+             <ThemeToggle />
+          </div>
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
           {children}

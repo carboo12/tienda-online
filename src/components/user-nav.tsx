@@ -127,11 +127,11 @@ export function UserNav() {
   const canViewNotifications = isSuperUser || isStoreAdmin;
 
   return (
-    <div className="flex items-center gap-2">
+    <>
         {canViewNotifications && (
             <DropdownMenu onOpenChange={(open) => { if(open && unreadCount > 0) markAllAsRead() }}>
                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Button variant="outline" size="icon" className="relative h-10 w-10 rounded-full">
                        <Bell className="h-5 w-5" />
                        {unreadCount > 0 && (
                            <span className="absolute top-0 right-0 flex h-2.5 w-2.5 items-center justify-center">
@@ -139,6 +139,7 @@ export function UserNav() {
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                            </span>
                        )}
+                       <span className="sr-only">Notifications</span>
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-80" align="end">
@@ -163,8 +164,8 @@ export function UserNav() {
         )}
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                <Avatar className="h-8 w-8">
+                <Button variant="outline" size="icon" className="relative h-10 w-10 rounded-full">
+                <Avatar className="h-10 w-10">
                     <AvatarFallback>
                     {user.name.charAt(0).toUpperCase()}
                     </AvatarFallback>
@@ -194,6 +195,6 @@ export function UserNav() {
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
-    </div>
+    </>
   )
 }
