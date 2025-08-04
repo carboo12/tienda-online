@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { getFirestore, collection, addDoc, getDocs, query, where, initializeFirestore } from 'firebase/firestore';
-import { Loader2, PlusCircle, ArrowLeft } from 'lucide-react';
+import { Loader2, PlusCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, FormEvent } from 'react';
 import Link from 'next/link';
@@ -49,6 +49,7 @@ export default function NewUserPage() {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('');
   const [storeId, setStoreId] = useState('unassigned');
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (!app) {
@@ -207,7 +208,27 @@ export default function NewUserPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Contraseña</Label>
-                <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={isSubmitting}/>
+                 <div className="relative">
+                    <Input 
+                      id="password" 
+                      type={showPassword ? "text" : "password"} 
+                      placeholder="••••••••" 
+                      value={password} 
+                      onChange={(e) => setPassword(e.target.value)} 
+                      required 
+                      disabled={isSubmitting}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute bottom-0 right-1 h-8 w-8"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      <span className="sr-only">Alternar visibilidad de contraseña</span>
+                    </Button>
+                 </div>
               </div>
                 <div className="space-y-2">
                     <Label htmlFor="role">Rol de Usuario</Label>
