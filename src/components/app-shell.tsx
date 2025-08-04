@@ -21,6 +21,7 @@ import {
   Bot,
   UsersRound,
   RefreshCw,
+  Settings,
 } from 'lucide-react';
 import { UserNav } from './user-nav';
 import { ThemeToggle } from './theme-toggle';
@@ -47,6 +48,7 @@ const adminNavItems = [
   { href: '/stores', icon: Store, label: 'Tiendas' },
   { href: '/users', icon: Users, label: 'Usuarios' },
   { href: '/log', icon: ClipboardList, label: 'Registro de Acciones' },
+  { href: '/settings', icon: Settings, label: 'Configuración' },
 ];
 
 export function AppShell({ children }: AppShellProps) {
