@@ -12,12 +12,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, ShoppingBasket, Bot, Loader2 } from "lucide-react";
+import { Eye, EyeOff, ShoppingBasket, Bot } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
 import { getApps, getApp, initializeApp } from 'firebase/app';
 import { login, getCurrentUser } from '@/lib/auth';
+import type { User } from '@/lib/auth';
 
 const firebaseConfig = {
   "projectId": "multishop-manager-3x6vw",
@@ -27,6 +28,12 @@ const firebaseConfig = {
   "authDomain": "multishop-manager-3x6vw.firebaseapp.com",
   "messagingSenderId": "900084459529"
 };
+
+interface UserData extends User {
+    contraseña?: string; // from 'users'
+    password?: string; // from 'masteruser'
+}
+
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -54,27 +61,42 @@ export default function LoginPage() {
         }
         const db = getFirestore(app);
         
-        // 1. Search for the user in the database (case-insensitive)
-        const q = query(collection(db, "masteruser"), where("nombre", "==", username.toLowerCase()));
-        const querySnapshot = await getDocs(q);
+        // 1. Check for Superuser in 'masteruser'
+        const masterQuery = query(collection(db, "masteruser"), where("nombre", "==", username.toLowerCase()));
+        const masterSnapshot = await getDocs(masterQuery);
 
-        if (querySnapshot.empty) {
-            throw new Error("Credenciales inválidas.");
-        }
-
-        const userDoc = querySnapshot.docs[0];
-        const userData = userDoc.data();
-
-        // 2. Compare passwords
-        if (userData.contraseña !== password) {
-            throw new Error("Credenciales inválidas.");
+        if (!masterSnapshot.empty) {
+            const masterDoc = masterSnapshot.docs[0];
+            const masterData = masterDoc.data() as UserData;
+            if (masterData.password === password) {
+                const sessionUser: User = { name: masterData.name, role: 'Superusuario', storeId: null };
+                login(sessionUser);
+                toast({ title: `¡Bienvenido, ${sessionUser.name}!`});
+                router.push('/dashboard');
+                return;
+            }
         }
         
-        // 3. Create "token" (session in localStorage) and grant access
-        login({ name: userData.nombre }); // Storing the username as the session identifier
+        // 2. If not superuser, check regular 'users'
+        const userQuery = query(collection(db, "users"), where("name", "==", username));
+        const userSnapshot = await getDocs(userQuery);
 
-        toast({ title: `¡Bienvenido, ${userData.nombre}!`});
-        router.push('/dashboard'); // Redirect after successful login
+        if (userSnapshot.empty) {
+            throw new Error("Credenciales inválidas.");
+        }
+
+        const userDoc = userSnapshot.docs[0];
+        const userData = userDoc.data() as UserData;
+
+        if (userData.password !== password) {
+             throw new Error("Credenciales inválidas.");
+        }
+
+        const sessionUser: User = { name: userData.name, role: userData.role, storeId: userData.storeId };
+        login(sessionUser);
+        toast({ title: `¡Bienvenido, ${sessionUser.name}!`});
+        router.push('/dashboard');
+
 
     } catch (error: any) {
         toast({
@@ -140,7 +162,7 @@ export default function LoginPage() {
               </div>
             </div>
             <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : null}
+              {isSubmitting ? <Bot className="mr-2 animate-spin"/> : null}
               {isSubmitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
             </Button>
           </form>

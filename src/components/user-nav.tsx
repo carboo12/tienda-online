@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -12,63 +12,159 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger
 } from "@/components/ui/dropdown-menu"
-import { User, LogOut } from "lucide-react"
+import { User, LogOut, Bell, CheckCheck } from "lucide-react"
 import { logout, getCurrentUser, User as AuthUser } from "@/lib/auth";
 import { useRouter } from 'next/navigation';
+import { getFirestore, collection, query, where, onSnapshot, orderBy, writeBatch } from 'firebase/firestore';
+import { getApps, getApp, initializeApp } from 'firebase/app';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
+
+const firebaseConfig = {
+  "projectId": "multishop-manager-3x6vw",
+  "appId": "1:900084459529:web:bada387e4da3d34007b0d8",
+  "storageBucket": "multishop-manager-3x6vw.firebasestorage.app",
+  "apiKey": "AIzaSyCOSWahgg7ldlIj1kTaYJy6jFnwmVThwUE",
+  "authDomain": "multishop-manager-3x6vw.firebaseapp.com",
+  "messagingSenderId": "900084459529"
+};
+
+interface Notification {
+    id: string;
+    message: string;
+    createdAt: Date;
+    isRead: boolean;
+}
 
 export function UserNav() {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     setUser(getCurrentUser());
   }, []);
+
+  useEffect(() => {
+    if (!user?.storeId) return;
+
+    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    const db = getFirestore(app);
+    const q = query(
+        collection(db, 'notifications'), 
+        where('storeId', '==', user.storeId),
+        orderBy('createdAt', 'desc')
+    );
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        const notifs = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            createdAt: doc.data().createdAt.toDate()
+        } as Notification));
+        setNotifications(notifs);
+        setUnreadCount(notifs.filter(n => !n.isRead).length);
+    });
+
+    return () => unsubscribe();
+
+  }, [user]);
 
   const handleLogout = () => {
     logout();
     router.replace('/login');
   };
 
+  const markAllAsRead = async () => {
+    if (!user?.storeId || unreadCount === 0) return;
+    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    const db = getFirestore(app);
+    const batch = writeBatch(db);
+    notifications.forEach(notif => {
+        if (!notif.isRead) {
+            const notifRef = doc(db, 'notifications', notif.id);
+            batch.update(notifRef, { isRead: true });
+        }
+    });
+    await batch.commit();
+  }
+
   if (!user || !user.name) {
     return null
   }
 
   const isSuperUser = user.name.toLowerCase() === 'admin';
+  const isStoreAdmin = user.role === 'Administrador de Tienda';
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback>
-              {user.name.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.name}</p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {isSuperUser ? 'Superusuario' : 'Usuario de Tienda'}
-            </p>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <User className="mr-2 h-4 w-4" />
-            <span>Perfil</span>
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Cerrar sesión</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="flex items-center gap-2">
+        {isStoreAdmin && (
+            <DropdownMenu onOpenChange={(open) => { if(open && unreadCount > 0) markAllAsRead() }}>
+                 <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                       <Bell className="h-5 w-5" />
+                       {unreadCount > 0 && (
+                           <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500" />
+                       )}
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-80" align="end">
+                    <DropdownMenuLabel>Notificaciones</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                     {notifications.length > 0 ? (
+                        notifications.map(notif => (
+                            <DropdownMenuItem key={notif.id} className="flex flex-col items-start gap-1 whitespace-normal">
+                                <p className="text-sm">{notif.message}</p>
+                                <p className="text-xs text-muted-foreground">
+                                    {formatDistanceToNow(notif.createdAt, { addSuffix: true, locale: es })}
+                                </p>
+                            </DropdownMenuItem>
+                        ))
+                    ) : (
+                        <DropdownMenuItem disabled>No hay notificaciones</DropdownMenuItem>
+                    )}
+                </DropdownMenuContent>
+            </DropdownMenu>
+        )}
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Avatar className="h-8 w-8">
+                    <AvatarFallback>
+                    {user.name.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                </Avatar>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user.name}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                    {user.role || (isSuperUser ? 'Superusuario' : 'Usuario de Tienda')}
+                    </p>
+                </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Perfil</span>
+                </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Cerrar sesión</span>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    </div>
   )
 }

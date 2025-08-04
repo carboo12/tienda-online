@@ -3,6 +3,8 @@
 
 export interface User {
   name: string;
+  role?: string;
+  storeId?: string | null;
 }
 
 const USER_STORAGE_KEY = 'multishop_user';

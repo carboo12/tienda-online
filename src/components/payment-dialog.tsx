@@ -98,8 +98,21 @@ export function PaymentDialog({ isOpen, onClose, client }: PaymentDialogProps) {
           amount: paymentAmount,
           notes: notes,
           registeredBy: user.name,
+          storeId: user.storeId || null,
           createdAt: Timestamp.now(),
         });
+        
+        // 3. Create a notification for the store admin
+        if (user.storeId) {
+            const notificationRef = doc(collection(db, 'notifications'));
+            const notificationMessage = `El usuario '${user.name}' registró un abono de C$ ${paymentAmount.toFixed(2)} para el cliente '${client.name}'.`;
+            transaction.set(notificationRef, {
+                message: notificationMessage,
+                storeId: user.storeId,
+                isRead: false,
+                createdAt: Timestamp.now(),
+            });
+        }
       });
 
       toast({
