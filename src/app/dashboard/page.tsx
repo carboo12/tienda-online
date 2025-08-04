@@ -7,7 +7,7 @@ import { AppShell } from '@/components/app-shell';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, Package, Users, ShoppingCart, Loader2 } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, onSnapshot } from 'firebase/firestore';
 import { getApps, getApp, initializeApp } from 'firebase/app';
 
 
@@ -36,37 +36,30 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    const fetchStats = async () => {
-      setIsLoading(true);
-      const db = getFirestore(app);
-      try {
-        // Fetch Invoices for Revenue
-        const invoicesSnapshot = await getDocs(collection(db, 'invoices'));
-        const totalRevenue = invoicesSnapshot.docs.reduce((sum, doc) => sum + (doc.data().total || 0), 0);
+    const db = getFirestore(app);
 
-        // Fetch Products for Inventory Count
-        const productsSnapshot = await getDocs(collection(db, 'products'));
-        const totalProducts = productsSnapshot.size;
-
-        // Fetch Clients for Client Count
-        const clientsSnapshot = await getDocs(collection(db, 'clients'));
-        const totalClients = clientsSnapshot.size;
-        
-        // Fetch Orders for Active Orders (assuming 'orders' collection exists)
-        // const ordersSnapshot = await getDocs(collection(db, 'orders'));
-        // const activeOrders = ordersSnapshot.size;
-        const activeOrders = 0; // Placeholder until orders are implemented
-
-        setStats({ totalRevenue, totalProducts, totalClients, activeOrders });
-      } catch (error) {
-        console.error("Error fetching dashboard stats:", error);
-        // Keep default zero values in case of error
-      } finally {
+    const unsubscribers = [
+      onSnapshot(collection(db, 'invoices'), (snapshot) => {
+        const totalRevenue = snapshot.docs.reduce((sum, doc) => sum + (doc.data().total || 0), 0);
+        setStats(prevStats => ({ ...prevStats, totalRevenue }));
         setIsLoading(false);
-      }
-    };
+      }),
+      onSnapshot(collection(db, 'products'), (snapshot) => {
+        const totalProducts = snapshot.size;
+        setStats(prevStats => ({ ...prevStats, totalProducts }));
+        setIsLoading(false);
+      }),
+      onSnapshot(collection(db, 'clients'), (snapshot) => {
+        const totalClients = snapshot.size;
+        setStats(prevStats => ({ ...prevStats, totalClients }));
+        setIsLoading(false);
+      }),
+      // Add listener for orders when implemented
+    ];
 
-    fetchStats();
+    // Cleanup function
+    return () => unsubscribers.forEach(unsub => unsub());
+    
   }, []);
   
   const statsCards = [
