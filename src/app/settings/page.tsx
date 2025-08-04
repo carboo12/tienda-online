@@ -38,7 +38,14 @@ const initialSettings = {
 };
 
 const fontOptions = ['Courier New', 'Lucida Console', 'Consolas', 'Monaco'];
-const printerOptions = ['Predeterminada del sistema', 'EPSON TM-T20II', 'BIXOLON SRP-350plus', 'Star TSP100'];
+const printerOptions = [
+    'Predeterminada del sistema', 
+    'EPSON TM-T20II', 
+    'BIXOLON SRP-350plus', 
+    'Star TSP100',
+    'Impresora Bluetooth Portátil (58mm)',
+    'Impresora Bluetooth Portátil (80mm)'
+];
 
 
 export default function SettingsPage() {
