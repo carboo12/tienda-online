@@ -40,10 +40,38 @@ interface Notification {
     type?: string;
 }
 
+// Datos de prueba para demostración
+const mockNotifications: Notification[] = [
+    {
+        id: '1',
+        message: 'Abono de C$ 500.00 registrado para Cliente Frecuente por Ana.',
+        createdAt: new Date(Date.now() - 1000 * 60 * 5), // Hace 5 minutos
+        isRead: false,
+        link: '/clients',
+        type: 'PAYMENT_RECEIVED'
+    },
+    {
+        id: '2',
+        message: 'Nuevo pedido #PED-001 creado para Tienda Central.',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // Hace 2 horas
+        isRead: false,
+        link: '/orders',
+        type: 'ORDER_CREATED'
+    },
+    {
+        id: '3',
+        message: 'El producto "Gaseosa 3L" tiene bajo stock (quedan 8).',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // Hace 1 día
+        isRead: true,
+        link: '/inventory',
+        type: 'LOW_STOCK'
+    }
+];
+
 export function UserNav() {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -51,6 +79,11 @@ export function UserNav() {
   }, []);
 
   useEffect(() => {
+    // Mantener los datos de prueba por ahora y simular la cuenta de no leídos
+    setUnreadCount(mockNotifications.filter(n => !n.isRead).length);
+
+    // El siguiente código se puede descomentar para volver a usar los datos reales de Firestore
+    /*
     if (!user?.storeId && user?.name?.toLowerCase() !== 'admin') return;
 
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
@@ -83,6 +116,7 @@ export function UserNav() {
     });
 
     return () => unsubscribe();
+    */
 
   }, [user]);
 
@@ -92,7 +126,13 @@ export function UserNav() {
   };
 
   const markAllAsRead = async () => {
-    if (unreadCount === 0) return;
+     if (unreadCount === 0) return;
+     // Simular el marcado como leído para los datos de prueba
+     setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+     setUnreadCount(0);
+
+    // El siguiente código se puede descomentar para la funcionalidad real
+    /*
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     const db = getFirestore(app);
     const batch = writeBatch(db);
@@ -103,6 +143,7 @@ export function UserNav() {
         }
     });
     await batch.commit();
+    */
   }
 
   if (!user || !user.name) {
