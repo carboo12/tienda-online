@@ -13,80 +13,68 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, ShoppingBasket, Bot, Loader2 } from "lucide-react";
-import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { getFirestore, collection, query, where, getDocs, DocumentData } from 'firebase/firestore';
+import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
+import { getApps, getApp, initializeApp } from 'firebase/app';
+import { login, getCurrentUser } from '@/lib/auth';
+
+const firebaseConfig = {
+  "projectId": "multishop-manager-3x6vw",
+  "appId": "1:900084459529:web:bada387e4da3d34007b0d8",
+  "storageBucket": "multishop-manager-3x6vw.firebasestorage.app",
+  "apiKey": "AIzaSyCOSWahgg7ldlIj1kTaYJy6jFnwmVThwUE",
+  "authDomain": "multishop-manager-3x6vw.firebaseapp.com",
+  "messagingSenderId": "900084459529"
+};
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const { login, user, isLoading, app } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
-  
-  // If user is already logged in, redirect to dashboard
+
   useEffect(() => {
-    if (!isLoading && user) {
-        router.replace('/dashboard');
+    // If user is already logged in, redirect to dashboard
+    if (getCurrentUser()) {
+      router.replace('/dashboard');
     }
-  }, [user, isLoading, router]);
+  }, [router]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!app) {
-        toast({
-            variant: "destructive",
-            title: "Error de Inicialización",
-            description: "La aplicación aún se está cargando. Por favor, espera un momento.",
-        });
-        return;
-    }
     setIsSubmitting(true);
 
     try {
+        const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+        if (!app) {
+          throw new Error("La configuración de Firebase no está disponible.");
+        }
         const db = getFirestore(app);
-        let userFound = false;
-        let userData: DocumentData | null = null;
-
-        // 1. Check master user collection
-        const masterQuery = query(collection(db, "masteruser"), where("nombre", "==", username.toLowerCase()));
-        const masterSnapshot = await getDocs(masterQuery);
         
-        if (!masterSnapshot.empty) {
-            const doc = masterSnapshot.docs[0]; // Assuming unique usernames
-            if (doc.data().contraseña === password) {
-                userFound = true;
-                userData = doc.data();
-            }
-        }
+        // 1. Search for the user in the database (case-insensitive)
+        const q = query(collection(db, "masteruser"), where("nombre", "==", username.toLowerCase()));
+        const querySnapshot = await getDocs(q);
 
-        // 2. If not found in master, check regular users collection
-        if (!userFound) {
-            const usersQuery = query(collection(db, "users"), where("email", "==", username));
-            const usersSnapshot = await getDocs(usersQuery);
-
-            if (!usersSnapshot.empty) {
-                const doc = usersSnapshot.docs[0]; // Assuming unique emails
-                if (doc.data().password === password) { // In a real app, this should be a hashed password check
-                    userFound = true;
-                    userData = doc.data();
-                }
-            }
-        }
-
-        if (userFound && userData) {
-            // The name field might be 'nombre' for masteruser or 'name' for regular users
-            const finalUsername = userData.name || userData.nombre;
-            login({ name: finalUsername });
-            toast({ title: `¡Bienvenido, ${finalUsername}!`});
-            router.push('/dashboard');
-        } else {
+        if (querySnapshot.empty) {
             throw new Error("Credenciales inválidas.");
         }
+
+        const userDoc = querySnapshot.docs[0];
+        const userData = userDoc.data();
+
+        // 2. Compare passwords
+        if (userData.contraseña !== password) {
+            throw new Error("Credenciales inválidas.");
+        }
+        
+        // 3. Create "token" (session in localStorage) and grant access
+        login({ name: userData.nombre }); // Storing the username as the session identifier
+
+        toast({ title: `¡Bienvenido, ${userData.nombre}!`});
+        router.push('/dashboard'); // Redirect after successful login
 
     } catch (error: any) {
         toast({
@@ -98,16 +86,6 @@ export default function LoginPage() {
         setIsSubmitting(false);
     }
   };
-
-
-  // Do not render the form if the auth state is loading or a user is already found
-  if (isLoading || user) {
-     return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Bot className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -124,11 +102,11 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="username">Usuario o Email</Label>
+              <Label htmlFor="username">Usuario</Label>
               <Input
                 id="username"
                 type="text"
-                placeholder="Ej: admin o usuario@tienda.com"
+                placeholder="Ej: admin"
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}

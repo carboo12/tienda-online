@@ -4,14 +4,24 @@
 import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { useAuth } from '@/hooks/use-auth';
-import { getFirestore, collection, onSnapshot, query, doc, getDoc } from 'firebase/firestore';
+import { getFirestore, collection, onSnapshot, query, doc, getDoc, initializeFirestore } from 'firebase/firestore';
 import { Loader2, PlusCircle, History, Building2, FilePenLine } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { getApp, getApps, initializeApp } from 'firebase/app';
+
+
+const firebaseConfig = {
+  "projectId": "multishop-manager-3x6vw",
+  "appId": "1:900084459529:web:bada387e4da3d34007b0d8",
+  "storageBucket": "multishop-manager-3x6vw.firebasestorage.app",
+  "apiKey": "AIzaSyCOSWahgg7ldlIj1kTaYJy6jFnwmVThwUE",
+  "authDomain": "multishop-manager-3x6vw.firebaseapp.com",
+  "messagingSenderId": "900084459529"
+};
 
 
 interface Product {
@@ -27,16 +37,19 @@ interface Product {
 }
 
 export default function InventoryPage() {
-  const { app, isAuthLoading } = useAuth();
-  const router = useRouter();
-
   const [products, setProducts] = useState<Product[]>([]);
   const [isDataLoading, setIsDataLoading] = useState(true);
+  const [app, setApp] = useState(getApps().length > 0 ? getApp() : null);
+
+  useEffect(() => {
+    if (!app) {
+      setApp(initializeApp(firebaseConfig));
+    }
+  }, [app]);
+
 
    useEffect(() => {
-    if (isAuthLoading || !app) {
-      return;
-    }
+    if (!app) return;
     
     setIsDataLoading(true);
     const db = getFirestore(app);
@@ -82,7 +95,7 @@ export default function InventoryPage() {
     );
 
     return () => unsubscribe();
-  }, [app, isAuthLoading]);
+  }, [app]);
 
   return (
     <AppShell>

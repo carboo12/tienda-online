@@ -7,13 +7,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { getFirestore, doc, getDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, updateDoc, collection, getDocs, initializeFirestore } from 'firebase/firestore';
 import { Loader2, Save, ArrowLeft } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { useState, FormEvent, useEffect } from 'react';
 import Link from 'next/link';
+import { getApp, getApps, initializeApp } from 'firebase/app';
+
+
+const firebaseConfig = {
+  "projectId": "multishop-manager-3x6vw",
+  "appId": "1:900084459529:web:bada387e4da3d34007b0d8",
+  "storageBucket": "multishop-manager-3x6vw.firebasestorage.app",
+  "apiKey": "AIzaSyCOSWahgg7ldlIj1kTaYJy6jFnwmVThwUE",
+  "authDomain": "multishop-manager-3x6vw.firebaseapp.com",
+  "messagingSenderId": "900084459529"
+};
+
 
 interface ProductData {
     description: string;
@@ -31,11 +42,11 @@ interface Department {
 }
 
 export default function EditProductPage() {
-  const { app } = useAuth();
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
   const productId = params.id as string;
+  const [app, setApp] = useState(getApps().length > 0 ? getApp() : null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,6 +61,12 @@ export default function EditProductPage() {
   const [sellingPrice, setSellingPrice] = useState('');
   const [minimumStock, setMinimumStock] = useState('');
   const [departmentId, setDepartmentId] = useState('none');
+  
+  useEffect(() => {
+    if (!app) {
+      setApp(initializeApp(firebaseConfig));
+    }
+  }, [app]);
 
   useEffect(() => {
     if (!app || !productId) return;

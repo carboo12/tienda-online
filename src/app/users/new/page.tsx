@@ -7,13 +7,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { getFirestore, collection, addDoc, getDocs, query } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, query, initializeFirestore } from 'firebase/firestore';
 import { Loader2, PlusCircle, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, FormEvent } from 'react';
 import Link from 'next/link';
+import { getCurrentUser } from '@/lib/auth';
+import { getApp, getApps, initializeApp } from 'firebase/app';
+
+
+const firebaseConfig = {
+  "projectId": "multishop-manager-3x6vw",
+  "appId": "1:900084459529:web:bada387e4da3d34007b0d8",
+  "storageBucket": "multishop-manager-3x6vw.firebasestorage.app",
+  "apiKey": "AIzaSyCOSWahgg7ldlIj1kTaYJy6jFnwmVThwUE",
+  "authDomain": "multishop-manager-3x6vw.firebaseapp.com",
+  "messagingSenderId": "900084459529"
+};
+
 
 interface Store {
   id: string;
@@ -21,9 +33,11 @@ interface Store {
 }
 
 export default function NewUserPage() {
-  const { user, isLoading: isAuthLoading, app } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const [user, setUser] = useState(getCurrentUser());
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [app, setApp] = useState(getApps().length > 0 ? getApp() : null);
 
   const [stores, setStores] = useState<Store[]>([]);
   const [isLoadingStores, setIsLoadingStores] = useState(true);
@@ -35,6 +49,16 @@ export default function NewUserPage() {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('');
   const [storeId, setStoreId] = useState('unassigned');
+
+  useEffect(() => {
+    if (!app) {
+      setApp(initializeApp(firebaseConfig));
+    }
+    const currentUser = getCurrentUser();
+    setUser(currentUser);
+    setIsAuthLoading(false);
+  }, [app]);
+
 
   useEffect(() => {
     if (isAuthLoading) return;

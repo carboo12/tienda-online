@@ -5,7 +5,6 @@ import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { getFirestore, collection, onSnapshot, query } from 'firebase/firestore';
 import { Loader2, PlusCircle, FilePenLine, Wallet } from 'lucide-react';
@@ -13,6 +12,16 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PaymentDialog } from '@/components/payment-dialog';
+import { getApps, getApp, initializeApp } from 'firebase/app';
+
+const firebaseConfig = {
+  "projectId": "multishop-manager-3x6vw",
+  "appId": "1:900084459529:web:bada387e4da3d34007b0d8",
+  "storageBucket": "multishop-manager-3x6vw.firebasestorage.app",
+  "apiKey": "AIzaSyCOSWahgg7ldlIj1kTaYJy6jFnwmVThwUE",
+  "authDomain": "multishop-manager-3x6vw.firebaseapp.com",
+  "messagingSenderId": "900084459529"
+};
 
 interface Client {
   id: string;
@@ -24,7 +33,6 @@ interface Client {
 }
 
 export default function ClientsPage() {
-  const { user, isLoading: isAuthLoading, app } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -34,10 +42,7 @@ export default function ClientsPage() {
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (isAuthLoading || !app) {
-      return;
-    }
-    
+    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     setIsDataLoading(true);
     const db = getFirestore(app);
     const q = query(collection(db, 'clients'));
@@ -70,7 +75,7 @@ export default function ClientsPage() {
     );
 
     return () => unsubscribe();
-  }, [user, isAuthLoading, router, toast, app]);
+  }, [router, toast]);
 
   const handleOpenPaymentDialog = (client: Client) => {
     setSelectedClient(client);
@@ -78,7 +83,7 @@ export default function ClientsPage() {
   };
 
 
-  if (isAuthLoading) {
+  if (isDataLoading) {
     return (
       <AppShell>
         <div className="flex h-full w-full items-center justify-center">

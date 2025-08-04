@@ -4,19 +4,36 @@
 import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { useAuth } from '@/hooks/use-auth';
-import { getFirestore, collection, onSnapshot, query, limit } from 'firebase/firestore';
+import { getFirestore, collection, onSnapshot, query, limit, initializeFirestore } from 'firebase/firestore';
 import { Loader2, PlusCircle, UsersRound } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { getApp, getApps, initializeApp } from 'firebase/app';
+
+
+const firebaseConfig = {
+  "projectId": "multishop-manager-3x6vw",
+  "appId": "1:900084459529:web:bada387e4da3d34007b0d8",
+  "storageBucket": "multishop-manager-3x6vw.firebasestorage.app",
+  "apiKey": "AIzaSyCOSWahgg7ldlIj1kTaYJy6jFnwmVThwUE",
+  "authDomain": "multishop-manager-3x6vw.firebaseapp.com",
+  "messagingSenderId": "900084459529"
+};
+
 
 export default function OrdersPage() {
-  const { app, isAuthLoading } = useAuth();
+  const [app, setApp] = useState(getApps().length > 0 ? getApp() : null);
   const [hasClients, setHasClients] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (isAuthLoading || !app) {
+    if (!app) {
+      setApp(initializeApp(firebaseConfig));
+    }
+  }, [app]);
+
+  useEffect(() => {
+    if (!app) {
       return;
     }
 
@@ -34,9 +51,9 @@ export default function OrdersPage() {
 
     return () => unsubscribe();
 
-  }, [app, isAuthLoading]);
+  }, [app]);
 
-  if (isLoading || isAuthLoading) {
+  if (isLoading) {
     return (
         <AppShell>
             <div className="flex h-full w-full items-center justify-center">

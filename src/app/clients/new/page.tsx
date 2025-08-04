@@ -6,18 +6,26 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { getFirestore, collection, addDoc, GeoPoint } from 'firebase/firestore';
 import { Loader2, PlusCircle, MapPin, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import Link from 'next/link';
 import { useOnlineStatus } from '@/hooks/use-online-status';
 import { addPendingOperation } from '@/lib/offline-sync';
+import { getApps, getApp, initializeApp } from 'firebase/app';
+
+const firebaseConfig = {
+  "projectId": "multishop-manager-3x6vw",
+  "appId": "1:900084459529:web:bada387e4da3d34007b0d8",
+  "storageBucket": "multishop-manager-3x6vw.firebasestorage.app",
+  "apiKey": "AIzaSyCOSWahgg7ldlIj1kTaYJy6jFnwmVThwUE",
+  "authDomain": "multishop-manager-3x6vw.firebaseapp.com",
+  "messagingSenderId": "900084459529"
+};
 
 export default function NewClientPage() {
-  const { app } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const isOnline = useOnlineStatus();
@@ -100,6 +108,7 @@ export default function NewClientPage() {
     };
 
     if (isOnline) {
+        const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
         if (!app) {
             toast({ variant: "destructive", title: "Error de Conexión", description: "La conexión con la base de datos no está disponible."});
             setIsSubmitting(false);

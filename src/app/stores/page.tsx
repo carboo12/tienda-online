@@ -9,16 +9,28 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { getFirestore, collection, addDoc, Timestamp, onSnapshot, query } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, Timestamp, onSnapshot, query, initializeFirestore } from 'firebase/firestore';
 import { CalendarIcon, Loader2, PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, FormEvent } from 'react';
 import { useOnlineStatus } from '@/hooks/use-online-status';
 import { addPendingOperation } from '@/lib/offline-sync';
+import { getCurrentUser } from '@/lib/auth';
+import { getApp, getApps, initializeApp } from 'firebase/app';
+
+
+const firebaseConfig = {
+  "projectId": "multishop-manager-3x6vw",
+  "appId": "1:900084459529:web:bada387e4da3d34007b0d8",
+  "storageBucket": "multishop-manager-3x6vw.firebasestorage.app",
+  "apiKey": "AIzaSyCOSWahgg7ldlIj1kTaYJy6jFnwmVThwUE",
+  "authDomain": "multishop-manager-3x6vw.firebaseapp.com",
+  "messagingSenderId": "900084459529"
+};
+
 
 interface Store {
   id: string;
@@ -30,10 +42,13 @@ interface Store {
 }
 
 export default function StoresPage() {
-  const { user, isLoading: isAuthLoading, app } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const isOnline = useOnlineStatus();
+  const [user, setUser] = useState(getCurrentUser());
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [app, setApp] = useState(getApps().length > 0 ? getApp() : null);
+
 
   const [stores, setStores] = useState<Store[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,14 +60,24 @@ export default function StoresPage() {
   const [licenseExpires, setLicenseExpires] = useState<Date>();
 
   useEffect(() => {
-    if (isAuthLoading || !app) {
-      return; 
+    if (!app) {
+      setApp(initializeApp(firebaseConfig));
     }
+    const currentUser = getCurrentUser();
+    setUser(currentUser);
+    setIsAuthLoading(false);
+  }, [app]);
+
+  useEffect(() => {
+    if (isAuthLoading) return;
+
     if (user?.name !== 'admin') {
       router.replace('/dashboard');
       return;
     }
     
+    if (!app) return;
+
     setIsDataLoading(true);
     const db = getFirestore(app);
     const q = query(collection(db, 'stores'));

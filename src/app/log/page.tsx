@@ -4,10 +4,11 @@ import { AppShell } from '@/components/app-shell';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ShieldAlert } from 'lucide-react';
+import { getCurrentUser } from '@/lib/auth';
+import { Loader2 } from 'lucide-react';
 
 const logData = [
     { id: 1, user: 'user1@example.com', action: 'CREATE_INVOICE', details: 'Factura #INV-0012 creada para Cliente A', timestamp: '2023-10-27 10:00:00', status: 'Éxito' },
@@ -19,17 +20,26 @@ const logData = [
 ];
 
 export default function LogPage() {
-  const { user, isLoading } = useAuth();
+  const [user, setUser] = useState(getCurrentUser());
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && user?.name !== 'admin') {
+    const currentUser = getCurrentUser();
+    setUser(currentUser);
+    if (currentUser?.name !== 'admin') {
       router.replace('/dashboard');
+    } else {
+        setIsLoading(false);
     }
-  }, [user, isLoading, router]);
+  }, [router]);
 
   if (isLoading || !user || user.name !== 'admin') {
-    return <AppShell><div>Cargando...</div></AppShell>;
+    return <AppShell>
+        <div className="flex h-full w-full items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+    </AppShell>;
   }
 
   return (

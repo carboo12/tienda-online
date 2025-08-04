@@ -9,12 +9,22 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { getFirestore, collection, getDocs, doc, runTransaction, Timestamp } from 'firebase/firestore';
 import { Loader2, PlusCircle, ArrowLeft, Trash2, XCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { getApps, getApp, initializeApp } from 'firebase/app';
+import { getCurrentUser } from '@/lib/auth';
+
+const firebaseConfig = {
+  "projectId": "multishop-manager-3x6vw",
+  "appId": "1:900084459529:web:bada387e4da3d34007b0d8",
+  "storageBucket": "multishop-manager-3x6vw.firebasestorage.app",
+  "apiKey": "AIzaSyCOSWahgg7ldlIj1kTaYJy6jFnwmVThwUE",
+  "authDomain": "multishop-manager-3x6vw.firebaseapp.com",
+  "messagingSenderId": "900084459529"
+};
 
 // Data interfaces
 interface Client {
@@ -40,9 +50,9 @@ interface InvoiceItem {
 }
 
 export default function NewInvoicePage() {
-  const { app, user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const user = getCurrentUser();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
@@ -59,7 +69,7 @@ export default function NewInvoicePage() {
 
   // Fetch clients and products
   useEffect(() => {
-    if (!app) return;
+    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     const fetchData = async () => {
       setIsLoading(true);
       try {
@@ -86,7 +96,7 @@ export default function NewInvoicePage() {
       }
     };
     fetchData();
-  }, [app, toast]);
+  }, [toast]);
 
   const handleAddProduct = () => {
     if (!currentItemId || currentItemQuantity <= 0) {
@@ -143,12 +153,13 @@ export default function NewInvoicePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedClientId || invoiceItems.length === 0 || !app || !user) {
+    if (!selectedClientId || invoiceItems.length === 0 || !user) {
        toast({ variant: 'destructive', title: 'Factura Incompleta', description: 'Debes seleccionar un cliente y añadir al menos un producto.' });
        return;
     }
 
     setIsSubmitting(true);
+    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     const db = getFirestore(app);
 
     try {

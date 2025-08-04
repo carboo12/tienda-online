@@ -1,8 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/use-auth';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -21,20 +20,13 @@ import {
   ClipboardList,
   Bot,
   UsersRound,
-  FilePenLine,
-  Building2,
-  Wallet,
-  TrendingUp,
-  TrendingDown,
-  UserCheck,
   RefreshCw,
-  Loader2,
 } from 'lucide-react';
 import { UserNav } from './user-nav';
 import { ThemeToggle } from './theme-toggle';
 import { cn } from '@/lib/utils';
-import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import { OnlineStatusIndicator } from './online-status-indicator';
+import { getCurrentUser, User as AuthUser } from '@/lib/auth';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -57,21 +49,24 @@ const adminNavItems = [
 ];
 
 export function AppShell({ children }: AppShellProps) {
-  const { user, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isMobileNavOpen, setMobileNavOpen] = useState(false);
 
-  useEffect(() => {
-    // If auth state is resolved and there's no user, redirect to login
-    if (!isLoading && !user) {
+  // useLayoutEffect runs synchronously before the browser paints.
+  // This is crucial to prevent a "flash" of the protected content.
+  useLayoutEffect(() => {
+    const currentUser = getCurrentUser();
+    if (!currentUser) {
       router.replace('/login');
+    } else {
+      setUser(currentUser);
+      setIsLoading(false);
     }
-  }, [user, isLoading, router]);
+  }, [router]);
 
-  // While the auth state is loading, or if there's no user yet,
-  // show a full-page loader. This prevents rendering protected content
-  // before the auth check is complete.
   if (isLoading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
@@ -111,7 +106,6 @@ export function AppShell({ children }: AppShellProps) {
       </nav>
     );
   }
-
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">

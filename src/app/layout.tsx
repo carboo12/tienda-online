@@ -1,8 +1,8 @@
-
 import type { Metadata } from 'next';
 import './globals.css';
 import { Providers } from '@/components/providers';
 import { Toaster } from '@/components/ui/toaster';
+import { AuthProvider } from '@/contexts/auth-provider';
 
 export const metadata: Metadata = {
   title: 'Administrador MultiTienda',
@@ -25,8 +25,10 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <Providers>
+          <AuthProvider>
             {children}
             <Toaster />
+          </AuthProvider>
         </Providers>
       </body>
     </html>

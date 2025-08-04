@@ -6,13 +6,22 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { getFirestore, doc, getDoc, updateDoc, GeoPoint } from 'firebase/firestore';
 import { Loader2, Save, MapPin, ArrowLeft } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { useState, FormEvent, useEffect } from 'react';
 import Link from 'next/link';
+import { getApps, getApp, initializeApp } from 'firebase/app';
+
+const firebaseConfig = {
+  "projectId": "multishop-manager-3x6vw",
+  "appId": "1:900084459529:web:bada387e4da3d34007b0d8",
+  "storageBucket": "multishop-manager-3x6vw.firebasestorage.app",
+  "apiKey": "AIzaSyCOSWahgg7ldlIj1kTaYJy6jFnwmVThwUE",
+  "authDomain": "multishop-manager-3x6vw.firebaseapp.com",
+  "messagingSenderId": "900084459529"
+};
 
 interface ClientData {
     name: string;
@@ -25,7 +34,6 @@ interface ClientData {
 }
 
 export default function EditClientPage() {
-  const { app } = useAuth();
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
@@ -46,7 +54,8 @@ export default function EditClientPage() {
   const [longitude, setLongitude] = useState('');
 
   useEffect(() => {
-    if (!app || !clientId) return;
+    if (!clientId) return;
+    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
     const fetchClient = async () => {
         setIsLoading(true);
@@ -80,7 +89,7 @@ export default function EditClientPage() {
     };
 
     fetchClient();
-  }, [app, clientId, router, toast]);
+  }, [clientId, router, toast]);
 
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
@@ -104,9 +113,10 @@ export default function EditClientPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!clientName || !phone || !idNumber || !balance || !creditLimit || !app) return;
+    if (!clientName || !phone || !idNumber || !balance || !creditLimit) return;
 
     setIsSubmitting(true);
+    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     
     try {
       const db = getFirestore(app);

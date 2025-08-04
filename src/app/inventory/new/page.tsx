@@ -7,13 +7,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { getFirestore, collection, addDoc, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, initializeFirestore } from 'firebase/firestore';
 import { Loader2, PlusCircle, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, FormEvent, useEffect } from 'react';
 import Link from 'next/link';
+import { getApp, getApps, initializeApp } from 'firebase/app';
+
+
+const firebaseConfig = {
+  "projectId": "multishop-manager-3x6vw",
+  "appId": "1:900084459529:web:bada387e4da3d34007b0d8",
+  "storageBucket": "multishop-manager-3x6vw.firebasestorage.app",
+  "apiKey": "AIzaSyCOSWahgg7ldlIj1kTaYJy6jFnwmVThwUE",
+  "authDomain": "multishop-manager-3x6vw.firebaseapp.com",
+  "messagingSenderId": "900084459529"
+};
+
 
 interface Department {
     id: string;
@@ -21,9 +32,9 @@ interface Department {
 }
 
 export default function NewProductPage() {
-  const { app } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const [app, setApp] = useState(getApps().length > 0 ? getApp() : null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -37,6 +48,12 @@ export default function NewProductPage() {
   const [sellingPrice, setSellingPrice] = useState('');
   const [minimumStock, setMinimumStock] = useState('');
   const [departmentId, setDepartmentId] = useState('none');
+  
+  useEffect(() => {
+    if (!app) {
+      setApp(initializeApp(firebaseConfig));
+    }
+  }, [app]);
 
   useEffect(() => {
     if (!app) return;

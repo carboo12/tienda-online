@@ -6,10 +6,21 @@ import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useAuth } from '@/hooks/use-auth';
-import { getFirestore, collection, onSnapshot, query, where } from 'firebase/firestore';
+import { getFirestore, collection, onSnapshot, query, where, initializeFirestore } from 'firebase/firestore';
 import { ArrowLeft, Loader2, Package, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
+import { getApp, getApps, initializeApp } from 'firebase/app';
+
+
+const firebaseConfig = {
+  "projectId": "multishop-manager-3x6vw",
+  "appId": "1:900084459529:web:bada387e4da3d34007b0d8",
+  "storageBucket": "multishop-manager-3x6vw.firebasestorage.app",
+  "apiKey": "AIzaSyCOSWahgg7ldlIj1kTaYJy6jFnwmVThwUE",
+  "authDomain": "multishop-manager-3x6vw.firebaseapp.com",
+  "messagingSenderId": "900084459529"
+};
+
 
 interface Product {
   id: string;
@@ -19,12 +30,18 @@ interface Product {
 }
 
 export default function LowStockReportPage() {
-  const { app, isAuthLoading } = useAuth();
+  const [app, setApp] = useState(getApps().length > 0 ? getApp() : null);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (isAuthLoading || !app) return;
+    if (!app) {
+      setApp(initializeApp(firebaseConfig));
+    }
+  }, [app]);
+
+  useEffect(() => {
+    if (!app) return;
 
     setIsLoading(true);
     const db = getFirestore(app);
@@ -53,7 +70,7 @@ export default function LowStockReportPage() {
     });
 
     return () => unsubscribe();
-  }, [app, isAuthLoading]);
+  }, [app]);
   
   return (
     <AppShell>
@@ -116,4 +133,3 @@ export default function LowStockReportPage() {
     </AppShell>
   );
 }
-

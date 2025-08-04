@@ -6,13 +6,23 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, getDocs, initializeFirestore } from 'firebase/firestore';
 import { Loader2, PlusCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useState, FormEvent, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { getApp, getApps, initializeApp } from 'firebase/app';
+
+
+const firebaseConfig = {
+  "projectId": "multishop-manager-3x6vw",
+  "appId": "1:900084459529:web:bada387e4da3d34007b0d8",
+  "storageBucket": "multishop-manager-3x6vw.firebasestorage.app",
+  "apiKey": "AIzaSyCOSWahgg7ldlIj1kTaYJy6jFnwmVThwUE",
+  "authDomain": "multishop-manager-3x6vw.firebaseapp.com",
+  "messagingSenderId": "900084459529"
+};
 
 
 interface Department {
@@ -21,13 +31,20 @@ interface Department {
 }
 
 export default function DepartmentsPage() {
-    const { app } = useAuth();
     const { toast } = useToast();
+    const [app, setApp] = useState(getApps().length > 0 ? getApp() : null);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [departments, setDepartments] = useState<Department[]>([]);
     const [departmentName, setDepartmentName] = useState('');
+
+    useEffect(() => {
+        if (!app) {
+          setApp(initializeApp(firebaseConfig));
+        }
+    }, [app]);
+
 
     useEffect(() => {
         if (!app) return;
@@ -147,4 +164,3 @@ export default function DepartmentsPage() {
         </AppShell>
     );
 }
-

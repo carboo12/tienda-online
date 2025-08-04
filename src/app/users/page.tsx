@@ -5,13 +5,25 @@ import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { getFirestore, collection, onSnapshot, query, doc, getDoc } from 'firebase/firestore';
+import { getFirestore, collection, onSnapshot, query, doc, getDoc, initializeFirestore } from 'firebase/firestore';
 import { Loader2, PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { getCurrentUser } from '@/lib/auth';
+import { getApp, getApps, initializeApp } from 'firebase/app';
+
+
+const firebaseConfig = {
+  "projectId": "multishop-manager-3x6vw",
+  "appId": "1:900084459529:web:bada387e4da3d34007b0d8",
+  "storageBucket": "multishop-manager-3x6vw.firebasestorage.app",
+  "apiKey": "AIzaSyCOSWahgg7ldlIj1kTaYJy6jFnwmVThwUE",
+  "authDomain": "multishop-manager-3x6vw.firebaseapp.com",
+  "messagingSenderId": "900084459529"
+};
+
 
 interface User {
     id: string;
@@ -23,13 +35,23 @@ interface User {
 }
 
 export default function UsersPage() {
-  const { user, isLoading: isAuthLoading, app } = useAuth();
   const router = useRouter();
-  const { toast } = useToast();
+  const [user, setUser] = useState(getCurrentUser());
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [app, setApp] = useState(getApps().length > 0 ? getApp() : null);
 
   const [users, setUsers] = useState<User[]>([]);
   const [isDataLoading, setIsDataLoading] = useState(true);
   
+  useEffect(() => {
+    if (!app) {
+      setApp(initializeApp(firebaseConfig));
+    }
+    const currentUser = getCurrentUser();
+    setUser(currentUser);
+    setIsAuthLoading(false);
+  }, [app]);
+
   useEffect(() => {
     if (isAuthLoading) return;
     if (user?.name !== 'admin') {

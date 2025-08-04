@@ -6,12 +6,21 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { PlusCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useAuth } from '@/hooks/use-auth';
 import { getFirestore, collection, onSnapshot, query, orderBy, Timestamp } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import { getApps, getApp, initializeApp } from 'firebase/app';
+
+const firebaseConfig = {
+  "projectId": "multishop-manager-3x6vw",
+  "appId": "1:900084459529:web:bada387e4da3d34007b0d8",
+  "storageBucket": "multishop-manager-3x6vw.firebasestorage.app",
+  "apiKey": "AIzaSyCOSWahgg7ldlIj1kTaYJy6jFnwmVThwUE",
+  "authDomain": "multishop-manager-3x6vw.firebaseapp.com",
+  "messagingSenderId": "900084459529"
+};
 
 interface Invoice {
   id: string;
@@ -22,13 +31,11 @@ interface Invoice {
 }
 
 export default function InvoicesPage() {
-  const { app, isAuthLoading } = useAuth();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (isAuthLoading || !app) return;
-
+    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     setIsLoading(true);
     const db = getFirestore(app);
     const q = query(collection(db, 'invoices'), orderBy('createdAt', 'desc'));
@@ -52,7 +59,7 @@ export default function InvoicesPage() {
     });
 
     return () => unsubscribe();
-  }, [app, isAuthLoading]);
+  }, []);
 
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {

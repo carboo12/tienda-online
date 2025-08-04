@@ -15,10 +15,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/use-auth';
 import { getFirestore, doc, runTransaction, collection, addDoc, Timestamp } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { Textarea } from './ui/textarea';
+import { getApps, getApp, initializeApp } from 'firebase/app';
+import { getCurrentUser } from '@/lib/auth';
+
+
+const firebaseConfig = {
+  "projectId": "multishop-manager-3x6vw",
+  "appId": "1:900084459529:web:bada387e4da3d34007b0d8",
+  "storageBucket": "multishop-manager-3x6vw.firebasestorage.app",
+  "apiKey": "AIzaSyCOSWahgg7ldlIj1kTaYJy6jFnwmVThwUE",
+  "authDomain": "multishop-manager-3x6vw.firebaseapp.com",
+  "messagingSenderId": "900084459529"
+};
+
 
 interface Client {
   id: string;
@@ -33,15 +45,15 @@ interface PaymentDialogProps {
 }
 
 export function PaymentDialog({ isOpen, onClose, client }: PaymentDialogProps) {
-  const { app, user } = useAuth();
   const { toast } = useToast();
   const [amount, setAmount] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const user = getCurrentUser();
 
   const handleRegisterPayment = async () => {
     const paymentAmount = parseFloat(amount);
-    if (!app || !user || isNaN(paymentAmount) || paymentAmount <= 0) {
+    if (!user || isNaN(paymentAmount) || paymentAmount <= 0) {
       toast({
         variant: 'destructive',
         title: 'Monto Inválido',
@@ -60,6 +72,7 @@ export function PaymentDialog({ isOpen, onClose, client }: PaymentDialogProps) {
     }
 
     setIsSubmitting(true);
+    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     const db = getFirestore(app);
 
     try {

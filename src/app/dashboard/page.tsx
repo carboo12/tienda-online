@@ -6,8 +6,20 @@ import Link from 'next/link';
 import { AppShell } from '@/components/app-shell';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, Package, Users, ShoppingCart, Loader2 } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { getCurrentUser } from '@/lib/auth';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { getApps, getApp, initializeApp } from 'firebase/app';
+
+
+const firebaseConfig = {
+  "projectId": "multishop-manager-3x6vw",
+  "appId": "1:900084459529:web:bada387e4da3d34007b0d8",
+  "storageBucket": "multishop-manager-3x6vw.firebasestorage.app",
+  "apiKey": "AIzaSyCOSWahgg7ldlIj1kTaYJy6jFnwmVThwUE",
+  "authDomain": "multishop-manager-3x6vw.firebaseapp.com",
+  "messagingSenderId": "900084459529"
+};
+
 
 interface Stats {
   totalRevenue: number;
@@ -17,14 +29,13 @@ interface Stats {
 }
 
 export default function DashboardPage() {
-  const { user, app } = useAuth();
+  const user = getCurrentUser();
   const isAdmin = user?.name === 'admin';
   const [stats, setStats] = useState<Stats>({ totalRevenue: 0, totalProducts: 0, totalClients: 0, activeOrders: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!app) return;
-
+    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     const fetchStats = async () => {
       setIsLoading(true);
       const db = getFirestore(app);
@@ -56,7 +67,7 @@ export default function DashboardPage() {
     };
 
     fetchStats();
-  }, [app]);
+  }, []);
   
   const statsCards = [
     { title: 'Ingresos Totales', value: `C$ ${stats.totalRevenue.toFixed(2)}`, icon: DollarSign, href: '/invoices' },
