@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
 import { getApps, getApp, initializeApp } from 'firebase/app';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { login, getCurrentUser } from '@/lib/auth';
 import type { User } from '@/lib/auth';
 
@@ -31,8 +32,8 @@ const firebaseConfig = {
 
 interface UserData extends User {
     contraseña?: string;
+    email?: string;
 }
-
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -59,6 +60,7 @@ export default function LoginPage() {
           throw new Error("La configuración de Firebase no está disponible.");
         }
         const db = getFirestore(app);
+        const auth = getAuth(app);
         
         // 1. Check for Superuser in 'masteruser'
         const masterQuery = query(collection(db, "masteruser"), where("nombre", "==", username.toLowerCase()));
@@ -86,22 +88,35 @@ export default function LoginPage() {
 
         const userDoc = userSnapshot.docs[0];
         const userData = userDoc.data() as UserData;
+        const userEmail = userData.email;
 
-        if (userData.contraseña !== password) {
-             throw new Error("Credenciales inválidas.");
+        if (!userEmail) {
+            throw new Error("El usuario no tiene un correo electrónico configurado para iniciar sesión.");
         }
 
+        // Use Firebase Auth to sign in
+        await signInWithEmailAndPassword(auth, userEmail, password);
+
+        // If sign in is successful, create local session
         const sessionUser: User = { name: userData.name, role: userData.role, storeId: userData.storeId };
         login(sessionUser);
         toast({ title: `¡Bienvenido, ${sessionUser.name}!`});
         router.push('/dashboard');
 
-
     } catch (error: any) {
+        console.error("Login error: ", error);
+        // Handle Firebase Auth errors
+        let errorMessage = "Credenciales inválidas. Por favor, inténtalo de nuevo.";
+        if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+           errorMessage = "Usuario o contraseña incorrectos.";
+        } else if (error.message) {
+           errorMessage = error.message;
+        }
+
         toast({
             variant: "destructive",
             title: "Error de Inicio de Sesión",
-            description: error.message || "Credenciales inválidas. Por favor, inténtalo de nuevo.",
+            description: errorMessage,
         });
     } finally {
         setIsSubmitting(false);
