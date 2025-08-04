@@ -47,7 +47,7 @@ const mainNavItems = [
 const adminNavItems = [
   { href: '/stores', icon: Store, label: 'Tiendas', superOnly: true },
   { href: '/users', icon: Users, label: 'Usuarios' },
-  { href: '/log', icon: ClipboardList, label: 'Registro de Acciones', superOnly: true },
+  { href: '/log', icon: ClipboardList, label: 'Registro de Acciones' },
   { href: '/settings', icon: Settings, label: 'Configuración' },
 ];
 

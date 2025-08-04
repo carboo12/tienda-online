@@ -16,6 +16,7 @@ import { useOnlineStatus } from '@/hooks/use-online-status';
 import { addPendingOperation } from '@/lib/offline-sync';
 import { getApps, getApp, initializeApp } from 'firebase/app';
 import { getCurrentUser } from '@/lib/auth';
+import { logUserAction } from '@/lib/action-logger';
 
 const firebaseConfig = {
   "projectId": "multishop-manager-3x6vw",
@@ -80,7 +81,7 @@ export default function NewClientPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!clientName || !phone || !idNumber || !balance || !creditLimit) {
+    if (!clientName || !phone || !idNumber || !balance || !creditLimit || !user) {
         toast({
             variant: "destructive",
             title: "Campos Requeridos",
@@ -129,6 +130,13 @@ export default function NewClientPage() {
                 ...clientData,
                 location,
                 createdAt: new Date(clientData.createdAt), // Convert back to Date object for Firestore
+            });
+
+            await logUserAction({
+                user,
+                action: 'CREATE_CLIENT',
+                details: `Cliente "${clientName}" creado.`,
+                status: 'success'
             });
 
             toast({

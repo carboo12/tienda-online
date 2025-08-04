@@ -17,6 +17,7 @@ import Link from 'next/link';
 import { getApps, getApp, initializeApp } from 'firebase/app';
 import { getCurrentUser } from '@/lib/auth';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { logUserAction } from '@/lib/action-logger';
 
 const firebaseConfig = {
   "projectId": "multishop-manager-3x6vw",
@@ -190,6 +191,7 @@ export default function NewInvoicePage() {
         const clientRef = doc(db, 'clients', selectedClientId);
         const clientDoc = await transaction.get(clientRef);
         if (!clientDoc.exists()) throw new Error("El cliente no existe.");
+        const clientName = clientDoc.data().name;
 
         // Check product stock again within transaction
         for (const item of invoiceItems) {
@@ -215,14 +217,14 @@ export default function NewInvoicePage() {
         const invoiceRef = doc(collection(db, 'invoices'));
         const invoiceData: any = {
             clientId: selectedClientId,
-            clientName: clientDoc.data().name,
+            clientName: clientName,
             items: invoiceItems,
             total: invoiceTotal,
             paymentMethod: paymentMethod,
             status: paymentMethod === 'credit' ? 'Pendiente' : 'Pagada',
             createdAt: Timestamp.now(),
             createdBy: user.name,
-            creatorRole: user.name === 'admin' ? 'Administrador' : 'Vendedor'
+            creatorRole: user.role
         };
 
         if (!isSuperUser && user.storeId) {
@@ -230,6 +232,13 @@ export default function NewInvoicePage() {
         }
 
         transaction.set(invoiceRef, invoiceData);
+
+        await logUserAction({
+            user,
+            action: 'CREATE_INVOICE',
+            details: `Factura por C$${invoiceTotal.toFixed(2)} para ${clientName}.`,
+            status: 'success'
+        });
       });
 
       toast({ title: 'Factura Creada', description: 'La factura ha sido guardada exitosamente.' });

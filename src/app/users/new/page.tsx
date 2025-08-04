@@ -13,8 +13,9 @@ import { Loader2, PlusCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, FormEvent } from 'react';
 import Link from 'next/link';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, User } from '@/lib/auth';
 import { getApp, getApps, initializeApp } from 'firebase/app';
+import { logUserAction } from '@/lib/action-logger';
 
 
 const firebaseConfig = {
@@ -35,7 +36,7 @@ interface Store {
 export default function NewUserPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [user, setUser] = useState(getCurrentUser());
+  const [user, setUser] = useState<User | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [app, setApp] = useState(getApps().length > 0 ? getApp() : null);
 
@@ -72,7 +73,10 @@ export default function NewUserPage() {
 
   useEffect(() => {
     const isSuperUser = user?.name === 'admin' || user?.role === 'Superusuario';
-    if (!isSuperUser || !app) return;
+    if (!isSuperUser || !app) {
+      setIsLoadingStores(false);
+      return;
+    };
 
     const fetchStores = async () => {
       setIsLoadingStores(true);
@@ -103,7 +107,7 @@ export default function NewUserPage() {
   const handleAddUser = async (e: FormEvent) => {
     e.preventDefault();
     
-    if (!username || !name || !email || !password || !role) {
+    if (!username || !name || !email || !password || !role || !user) {
         toast({
             variant: "destructive",
             title: "Campos Incompletos",
@@ -151,6 +155,13 @@ export default function NewUserPage() {
         role,
         storeId: finalStoreId === 'unassigned' ? null : finalStoreId,
         createdBy: user?.name, // Log which admin created this user
+      });
+
+      await logUserAction({
+          user,
+          action: 'CREATE_USER',
+          details: `Usuario "${username}" (${role}) creado.`,
+          status: 'success'
       });
 
       toast({
