@@ -1,5 +1,5 @@
 
-import { openDB, DBSchema } from 'idb';
+import { openDB, DBSchema, IDBPDatabase } from 'idb';
 import { getFirestore, collection, addDoc, GeoPoint, Timestamp } from 'firebase/firestore';
 import { getApps, getApp } from 'firebase/app';
 
@@ -22,33 +22,45 @@ interface MultiShopDBSchema extends DBSchema {
   };
 }
 
-const dbPromise = openDB<MultiShopDBSchema>(DB_NAME, DB_VERSION, {
-  upgrade(db) {
-    const store = db.createObjectStore(STORE_NAME, {
-      keyPath: 'id',
-      autoIncrement: true,
-    });
-    store.createIndex('by-timestamp', 'timestamp');
-  },
-});
+let dbPromise: Promise<IDBPDatabase<MultiShopDBSchema>> | null = null;
+
+const getDb = () => {
+    if (typeof window === 'undefined') {
+        // Return a dummy promise or handle server-side case appropriately
+        return Promise.reject(new Error("IndexedDB is not available on the server."));
+    }
+    if (!dbPromise) {
+        dbPromise = openDB<MultiShopDBSchema>(DB_NAME, DB_VERSION, {
+            upgrade(db) {
+                const store = db.createObjectStore(STORE_NAME, {
+                keyPath: 'id',
+                autoIncrement: true,
+                });
+                store.createIndex('by-timestamp', 'timestamp');
+            },
+        });
+    }
+    return dbPromise;
+};
+
 
 export const addPendingOperation = async (operation: Omit<PendingOperation, 'id'>) => {
-  const db = await dbPromise;
+  const db = await getDb();
   await db.add(STORE_NAME, operation as PendingOperation);
 };
 
 export const getPendingOperations = async (): Promise<PendingOperation[]> => {
-  const db = await dbPromise;
+  const db = await getDb();
   return db.getAllFromIndex(STORE_NAME, 'by-timestamp');
 };
 
 export const clearPendingOperation = async (id: number) => {
-    const db = await dbPromise;
+    const db = await getDb();
     await db.delete(STORE_NAME, id);
 };
 
 export const clearAllPendingOperations = async () => {
-    const db = await dbPromise;
+    const db = await getDb();
     await db.clear(STORE_NAME);
 }
 
