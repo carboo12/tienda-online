@@ -77,7 +77,7 @@ export default function LoginPage() {
         }
         
         // 2. If not superuser, check regular 'users'
-        const userQuery = query(collection(db, "users"), where("name", "==", username));
+        const userQuery = query(collection(db, "users"), where("username", "==", username));
         const userSnapshot = await getDocs(userQuery);
 
         if (userSnapshot.empty) {

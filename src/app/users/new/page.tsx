@@ -44,6 +44,7 @@ export default function NewUserPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // State for adding a new user
+  const [username, setUsername] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -103,11 +104,11 @@ export default function NewUserPage() {
     e.preventDefault();
     const isAdmin = user?.name === 'admin' || user?.role === 'Superusuario';
     
-    if (!name || !email || !password || !role) {
+    if (!username || !name || !email || !password || !role) {
         toast({
             variant: "destructive",
             title: "Campos Incompletos",
-            description: "Por favor, rellena nombre, email, contraseña y rol.",
+            description: "Por favor, rellena nombre de usuario, nombre, email, contraseña y rol.",
         });
         return;
     }
@@ -141,9 +142,10 @@ export default function NewUserPage() {
       }
 
       await addDoc(collection(db, "users"), {
+        username,
         name,
         email,
-        password, // Ideally, this should be hashed.
+        contraseña: password,
         role,
         storeId: storeId === 'unassigned' ? null : storeId,
         createdBy: user.name, // Log which admin created this user
@@ -199,6 +201,10 @@ export default function NewUserPage() {
           <CardContent>
             <form onSubmit={handleAddUser} className="space-y-4">
               <div className="space-y-2">
+                <Label htmlFor="username">Nombre de Usuario</Label>
+                <Input id="username" placeholder="Ej: jperez" value={username} onChange={(e) => setUsername(e.target.value)} required disabled={isSubmitting}/>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="name">Nombre Completo</Label>
                 <Input id="name" placeholder="Ej: Juan Pérez" value={name} onChange={(e) => setName(e.target.value)} required disabled={isSubmitting}/>
               </div>
@@ -251,7 +257,7 @@ export default function NewUserPage() {
                             <SelectValue placeholder={isLoadingStores ? "Cargando tiendas..." : "Selecciona una tienda"} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="unassigned">Sin Asignar (Para Roles no Admin)</SelectItem>
+                            <SelectItem value="unassigned">Sin Asignar</SelectItem>
                             {stores.map(store => (
                                 <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
                             ))}

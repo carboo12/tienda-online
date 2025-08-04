@@ -31,6 +31,7 @@ interface Store {
 }
 
 interface UserData {
+    username: string;
     name: string;
     email: string;
     role: string;
@@ -52,6 +53,7 @@ export default function EditUserPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Form state
+  const [username, setUsername] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -75,6 +77,7 @@ export default function EditUserPage() {
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
             const data = userSnap.data() as UserData;
+            setUsername(data.username);
             setName(data.name);
             setEmail(data.email);
             setRole(data.role);
@@ -110,8 +113,8 @@ export default function EditUserPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!name || !email || !role) {
-      toast({ variant: 'destructive', title: 'Campos incompletos', description: 'Nombre, email y rol son requeridos.' });
+    if (!username || !name || !email || !role) {
+      toast({ variant: 'destructive', title: 'Campos incompletos', description: 'Nombre de usuario, nombre, email y rol son requeridos.' });
       return;
     }
     if (role === 'Administrador de Tienda' && storeId === 'unassigned') {
@@ -137,6 +140,7 @@ export default function EditUserPage() {
 
       const userRef = doc(db, 'users', userId);
       const userData: any = {
+        username,
         name,
         email,
         role,
@@ -190,6 +194,10 @@ export default function EditUserPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+               <div className="space-y-2">
+                <Label htmlFor="username">Nombre de Usuario</Label>
+                <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} required disabled={isSubmitting}/>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="name">Nombre Completo</Label>
                 <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required disabled={isSubmitting}/>

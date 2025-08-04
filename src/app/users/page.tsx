@@ -27,6 +27,7 @@ const firebaseConfig = {
 
 interface User {
     id: string;
+    username: string;
     name: string;
     email: string;
     role: string;
@@ -53,8 +54,8 @@ export default function UsersPage() {
   }, [app]);
 
   useEffect(() => {
-    if (isAuthLoading) return;
     const isAdmin = user?.name === 'admin' || user?.role === 'Superusuario';
+    if (isAuthLoading) return;
     if (!isAdmin) {
       router.replace('/dashboard');
     }
@@ -71,7 +72,7 @@ export default function UsersPage() {
       const usersData: User[] = [];
       for (const userDoc of snapshot.docs) {
           const data = userDoc.data();
-          let storeName = 'Sin Asignar (Demo)';
+          let storeName = 'Sin Asignar';
 
           if (data.storeId) {
             try {
@@ -89,6 +90,7 @@ export default function UsersPage() {
           }
            usersData.push({
               id: userDoc.id,
+              username: data.username,
               name: data.name,
               email: data.email,
               role: data.role,
@@ -148,8 +150,8 @@ export default function UsersPage() {
                     <Table>
                         <TableHeader>
                         <TableRow>
-                            <TableHead>Nombre</TableHead>
-                            <TableHead className="hidden sm:table-cell">Email</TableHead>
+                            <TableHead>Usuario</TableHead>
+                            <TableHead className="hidden sm:table-cell">Nombre Completo</TableHead>
                             <TableHead>Rol</TableHead>
                             <TableHead className="hidden md:table-cell">Tienda</TableHead>
                             <TableHead className="text-right">Acciones</TableHead>
@@ -158,8 +160,8 @@ export default function UsersPage() {
                         <TableBody>
                         {users.map((user) => (
                             <TableRow key={user.id}>
-                            <TableCell className="font-medium">{user.name}</TableCell>
-                            <TableCell className="hidden sm:table-cell text-muted-foreground">{user.email}</TableCell>
+                            <TableCell className="font-medium">{user.username}</TableCell>
+                            <TableCell className="hidden sm:table-cell text-muted-foreground">{user.name}</TableCell>
                             <TableCell>{user.role}</TableCell>
                             <TableCell className="hidden md:table-cell text-muted-foreground">{user.storeName}</TableCell>
                             <TableCell className="text-right">
