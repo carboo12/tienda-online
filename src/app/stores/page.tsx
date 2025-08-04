@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { getFirestore, collection, addDoc, Timestamp, onSnapshot, query, initializeFirestore } from 'firebase/firestore';
-import { CalendarIcon, Loader2, PlusCircle } from 'lucide-react';
+import { CalendarIcon, Loader2, PlusCircle, FilePenLine } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, FormEvent } from 'react';
 import { useOnlineStatus } from '@/hooks/use-online-status';
@@ -288,8 +288,8 @@ export default function StoresPage() {
                         <TableRow>
                           <TableHead>Nombre Tienda</TableHead>
                           <TableHead className="hidden sm:table-cell">Dueño/a</TableHead>
-                          <TableHead className="hidden md:table-cell">Teléfono</TableHead>
                           <TableHead>Vencimiento</TableHead>
+                          <TableHead className="text-right">Acciones</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -297,8 +297,14 @@ export default function StoresPage() {
                           <TableRow key={store.id}>
                             <TableCell className="font-medium">{store.name}</TableCell>
                             <TableCell className="hidden sm:table-cell">{store.owner}</TableCell>
-                            <TableCell className="hidden md:table-cell text-muted-foreground">{store.phone}</TableCell>
                             <TableCell>{format(store.licenseExpires, "dd/MM/yyyy")}</TableCell>
+                            <TableCell className="text-right">
+                                <Button variant="ghost" size="icon" asChild>
+                                    <Link href={`/stores/edit/${store.id}`}>
+                                        <FilePenLine className="h-4 w-4" />
+                                    </Link>
+                                </Button>
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
