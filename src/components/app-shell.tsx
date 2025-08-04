@@ -113,7 +113,7 @@ export function AppShell({ children }: AppShellProps) {
   }
   
   const renderNavLinks = (isMobile = false) => {
-    const isAdmin = user?.name === 'admin';
+    const isAdmin = user?.name === 'admin' || user?.role === 'Superusuario';
     
     const navLink = (item: { href: string; icon: React.ElementType; label: string; }) => (
       <Button

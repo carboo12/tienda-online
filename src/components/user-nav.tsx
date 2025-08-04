@@ -55,7 +55,7 @@ export function UserNav() {
     if (!user) return;
     
     // Determine if user is an admin or has a storeId to view notifications
-    const isSuperUser = user.name?.toLowerCase() === 'admin';
+    const isSuperUser = user.name?.toLowerCase() === 'admin' || user.role === 'Superusuario';
     const isStoreAdmin = user.role === 'Administrador de Tienda';
     if (!isSuperUser && !isStoreAdmin) return;
     
@@ -122,7 +122,7 @@ export function UserNav() {
     return null
   }
 
-  const isSuperUser = user.name.toLowerCase() === 'admin';
+  const isSuperUser = user.name.toLowerCase() === 'admin' || user.role === 'Superusuario';
   const isStoreAdmin = user.role === 'Administrador de Tienda';
   const canViewNotifications = isSuperUser || isStoreAdmin;
 
