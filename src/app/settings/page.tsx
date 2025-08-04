@@ -9,12 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Save, DollarSign } from 'lucide-react';
+import { Loader2, Save, DollarSign, Bluetooth, Monitor, Printer as PrinterIcon } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 // Mock data, in a real app this would come from state management or an API
 const initialSettings = {
@@ -22,7 +24,7 @@ const initialSettings = {
       exchangeRate: 1.0,
     },
     printer: {
-      printerName: 'EPSON TM-T20II',
+      printerName: 'system',
       font: 'Courier New',
       fontSize: 10,
       columns: 36,
@@ -38,28 +40,41 @@ const initialSettings = {
 };
 
 const fontOptions = ['Courier New', 'Lucida Console', 'Consolas', 'Monaco'];
-const printerOptions = [
-    'Predeterminada del sistema', 
-    'EPSON TM-T20II', 
-    'BIXOLON SRP-350plus', 
-    'Star TSP100',
-    'Impresora Bluetooth Portátil (58mm)',
-    'Impresora Bluetooth Portátil (80mm)'
+const printerProfiles = [
+    { value: 'system', label: 'Usar diálogo de impresión del sistema' },
+    { value: 'EPSON TM-T20II', label: 'EPSON TM-T20II' },
+    { value: 'BIXOLON SRP-350plus', label: 'BIXOLON SRP-350plus' },
+    { value: 'Star TSP100', label: 'Star TSP100' },
+    { value: 'bluetooth-58mm', label: 'Impresora Bluetooth Portátil (58mm)' },
+    { value: 'bluetooth-80mm', label: 'Impresora Bluetooth Portátil (80mm)' }
 ];
 
+type OperatingSystem = 'android' | 'desktop';
 
 export default function SettingsPage() {
     const [user, setUser] = useState(getCurrentUser());
     const [isAuthLoading, setIsAuthLoading] = useState(true);
     const router = useRouter();
+    const { toast } = useToast();
 
     const [settings, setSettings] = useState(initialSettings);
     const [isSaving, setIsSaving] = useState(false);
+    const [os, setOs] = useState<OperatingSystem>('desktop');
+    const [bluetoothPrinter, setBluetoothPrinter] = useState<BluetoothDevice | null>(null);
+    const [isSearchingBluetooth, setIsSearchingBluetooth] = useState(false);
+
 
     useEffect(() => {
         const currentUser = getCurrentUser();
         setUser(currentUser);
         setIsAuthLoading(false);
+
+        const userAgent = navigator.userAgent.toLowerCase();
+        if (userAgent.includes("android")) {
+            setOs('android');
+        } else {
+            setOs('desktop');
+        }
     }, []);
 
     useEffect(() => {
@@ -70,15 +85,52 @@ export default function SettingsPage() {
         }
     }, [user, isAuthLoading, router]);
 
-    const handleSave = () => {
+     const handleSave = () => {
         setIsSaving(true);
         console.log("Saving settings:", settings);
         setTimeout(() => {
             setIsSaving(false);
-            // Here you would show a toast notification on success
+            toast({
+                title: "Configuración Guardada",
+                description: "Tus cambios se han guardado correctamente.",
+            });
         }, 1500);
-    }
+    };
     
+    const handleSearchBluetooth = async () => {
+        if (!navigator.bluetooth) {
+            toast({
+                variant: 'destructive',
+                title: 'Bluetooth no Soportado',
+                description: 'Tu navegador o dispositivo no es compatible con la Web Bluetooth API.'
+            });
+            return;
+        }
+
+        setIsSearchingBluetooth(true);
+        try {
+            const device = await navigator.bluetooth.requestDevice({
+                filters: [{ services: ['000018f0-0000-1000-8000-00805f9b34fb'] }], // Generic Attribute Service (often used by printers)
+                // acceptAllDevices: true, // Use this for broader discovery if the service filter fails
+            });
+            setBluetoothPrinter(device);
+            toast({
+                title: 'Impresora Conectada',
+                description: `Se ha enlazado con el dispositivo: ${device.name}`
+            });
+        } catch (error) {
+            console.error('Error al buscar dispositivo Bluetooth:', error);
+            toast({
+                variant: 'destructive',
+                title: 'Búsqueda Cancelada',
+                description: 'No se pudo conectar con la impresora Bluetooth.'
+            });
+        } finally {
+            setIsSearchingBluetooth(false);
+        }
+    };
+
+
     if (isAuthLoading || !user || !((user.name === 'admin' || user.role === 'Superusuario' || user.role === 'Administrador de Tienda'))) {
         return (
           <AppShell>
@@ -185,27 +237,53 @@ export default function SettingsPage() {
                             <CardHeader>
                                 <CardTitle>Impresora de Tickets</CardTitle>
                                 <CardDescription>
-                                    Por favor elige la impresora de tickets entre las impresoras instaladas en tu sistema.
+                                    Selecciona el método de impresión según tu dispositivo.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
-                                <div className="space-y-2">
-                                <Label htmlFor="printerName">Impresora de Tickets</Label>
-                                <Select 
-                                        value={settings.printer.printerName}
-                                        onValueChange={(value) => setSettings(s => ({ ...s, printer: {...s.printer, printerName: value} }))}
-                                    >
-                                        <SelectTrigger id="printerName">
-                                            <SelectValue placeholder="Selecciona una impresora" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {printerOptions.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                                        </SelectContent>
-                                </Select>
-                                </div>
+                                {os === 'android' ? (
+                                    <Alert>
+                                        <Bluetooth className="h-4 w-4" />
+                                        <AlertTitle>Modo de Impresión Bluetooth</AlertTitle>
+                                        <AlertDescription className="space-y-4">
+                                           <p>Tu dispositivo Android ha sido detectado. Usa el siguiente botón para buscar y conectar tu impresora de tickets Bluetooth.</p>
+                                           <Button onClick={handleSearchBluetooth} disabled={isSearchingBluetooth}>
+                                                {isSearchingBluetooth ? <Loader2 className="animate-spin" /> : <Bluetooth />}
+                                                {isSearchingBluetooth ? 'Buscando...' : 'Buscar Impresoras Bluetooth'}
+                                            </Button>
+                                            {bluetoothPrinter && (
+                                                <div className="p-3 rounded-md border border-green-500 bg-green-50 dark:bg-green-900/20">
+                                                    <p className="font-semibold text-green-700 dark:text-green-300">Impresora enlazada: {bluetoothPrinter.name}</p>
+                                                </div>
+                                            )}
+                                        </AlertDescription>
+                                    </Alert>
+                                ) : (
+                                    <Alert>
+                                        <Monitor className="h-4 w-4" />
+                                        <AlertTitle>Modo de Impresión de Escritorio</AlertTitle>
+                                        <AlertDescription className="space-y-4">
+                                            <p>Para imprimir en Windows, macOS o Linux, la mejor opción es usar el diálogo de impresión del sistema, que te permite elegir cualquier impresora instalada en tu PC.</p>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="printerName">Perfil de Impresora</Label>
+                                                <Select 
+                                                    value={settings.printer.printerName}
+                                                    onValueChange={(value) => setSettings(s => ({ ...s, printer: {...s.printer, printerName: value} }))}
+                                                >
+                                                    <SelectTrigger id="printerName">
+                                                        <SelectValue placeholder="Selecciona un perfil" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {printerProfiles.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
                                 
                                 <div className="space-y-4 rounded-md border p-4">
-                                    <h3 className="font-semibold text-lg">Fuente de Impresión Normal</h3>
+                                    <h3 className="font-semibold text-lg flex items-center gap-2"><PrinterIcon />Ajustes de Fuente</h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
                                         <div className="space-y-2">
                                             <Label htmlFor="font">Fuente</Label>
@@ -242,20 +320,7 @@ export default function SettingsPage() {
                                             />
                                         </div>
                                     </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <div className="flex items-center space-x-2">
-                                        <Checkbox 
-                                            id="normal-for-totals" 
-                                            checked={settings.printer.useNormalFontForTotals}
-                                            onCheckedChange={(checked) => setSettings(s => ({ ...s, printer: {...s.printer, useNormalFontForTotals: !!checked} }))}
-                                        />
-                                        <label htmlFor="normal-for-totals" className="text-sm font-medium leading-none">
-                                            Usar fuente "normal" para los totales
-                                        </label>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
+                                      <div className="flex items-center space-x-2 pt-2">
                                         <Checkbox 
                                             id="use-bold"
                                             checked={settings.printer.useBold}
@@ -266,6 +331,8 @@ export default function SettingsPage() {
                                         </label>
                                     </div>
                                 </div>
+
+                              
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -315,6 +382,16 @@ export default function SettingsPage() {
                                             />
                                             <label htmlFor="printFullDescription" className="text-sm font-medium leading-none">Imprimir descripción completa (varios renglones).</label>
                                         </div>
+                                         <div className="flex items-center space-x-2">
+                                            <Checkbox 
+                                                id="normal-for-totals" 
+                                                checked={settings.printer.useNormalFontForTotals}
+                                                onCheckedChange={(checked) => setSettings(s => ({ ...s, printer: {...s.printer, useNormalFontForTotals: !!checked} }))}
+                                            />
+                                            <label htmlFor="normal-for-totals" className="text-sm font-medium leading-none">
+                                                Usar fuente "normal" para los totales
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="space-y-4">
@@ -329,3 +406,5 @@ export default function SettingsPage() {
         </AppShell>
     );
 }
+
+    
