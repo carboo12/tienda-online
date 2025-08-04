@@ -56,7 +56,9 @@ export default function SettingsPage() {
     }, []);
 
     useEffect(() => {
-        if (!isAuthLoading && user?.name !== 'admin') {
+        if (isAuthLoading) return;
+        const isAdmin = user?.name === 'admin' || user?.role === 'Superusuario';
+        if (!isAdmin) {
             router.replace('/dashboard');
         }
     }, [user, isAuthLoading, router]);
@@ -70,7 +72,7 @@ export default function SettingsPage() {
         }, 1500);
     }
     
-    if (isAuthLoading || user?.name !== 'admin') {
+    if (isAuthLoading || !user || !(user.name === 'admin' || user.role === 'Superusuario')) {
         return (
           <AppShell>
             <div className="flex h-full w-full items-center justify-center">

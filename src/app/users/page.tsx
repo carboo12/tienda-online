@@ -54,14 +54,16 @@ export default function UsersPage() {
 
   useEffect(() => {
     if (isAuthLoading) return;
-    if (user?.name !== 'admin') {
+    const isAdmin = user?.name === 'admin' || user?.role === 'Superusuario';
+    if (!isAdmin) {
       router.replace('/dashboard');
     }
   }, [user, isAuthLoading, router]);
 
 
   useEffect(() => {
-    if (user?.name !== 'admin' || !app) return;
+    const isAdmin = user?.name === 'admin' || user?.role === 'Superusuario';
+    if (!isAdmin || !app) return;
 
     const db = getFirestore(app);
     const unsubscribe = onSnapshot(query(collection(db, 'users')), async (snapshot) => {
@@ -101,7 +103,7 @@ export default function UsersPage() {
     return () => unsubscribe();
   }, [user, app]);
 
-  if (isAuthLoading || user?.name !== 'admin') {
+  if (isAuthLoading || !user || !(user.name === 'admin' || user.role === 'Superusuario')) {
     return (
       <AppShell>
         <div className="flex h-full w-full items-center justify-center">

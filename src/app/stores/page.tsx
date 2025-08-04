@@ -71,7 +71,8 @@ export default function StoresPage() {
   useEffect(() => {
     if (isAuthLoading) return;
 
-    if (user?.name !== 'admin') {
+    const isAdmin = user?.name === 'admin' || user?.role === 'Superusuario';
+    if (!isAdmin) {
       router.replace('/dashboard');
       return;
     }
@@ -186,7 +187,7 @@ export default function StoresPage() {
     }
   };
 
-  if (isAuthLoading || !user || user.name !== 'admin') {
+  if (isAuthLoading || !user || !(user.name === 'admin' || user.role === 'Superusuario')) {
     return (
       <AppShell>
         <div className="flex h-full w-full items-center justify-center">
