@@ -69,7 +69,7 @@ export default function NewInvoicePage() {
   
   // State for adding a new item
   const [currentItemId, setCurrentItemId] = useState('');
-  const [currentItemQuantity, setCurrentItemQuantity] = useState(1);
+  const [currentItemQuantity, setCurrentItemQuantity] = useState<number | string>(1);
 
   // Fetch clients and products
   useEffect(() => {
@@ -103,14 +103,15 @@ export default function NewInvoicePage() {
   }, [toast]);
 
   const handleAddProduct = () => {
-    if (!currentItemId || currentItemQuantity <= 0) {
+    const quantity = typeof currentItemQuantity === 'number' ? currentItemQuantity : parseInt(String(currentItemQuantity), 10);
+    if (!currentItemId || isNaN(quantity) || quantity <= 0) {
       toast({ variant: 'destructive', title: 'Datos inválidos', description: 'Selecciona un producto y una cantidad válida.' });
       return;
     }
     const product = products.find(p => p.id === currentItemId);
     if (!product) return;
 
-    if (product.quantity < currentItemQuantity) {
+    if (product.quantity < quantity) {
       toast({ variant: 'destructive', title: 'Stock Insuficiente', description: `Solo quedan ${product.quantity} unidades de ${product.description}.` });
       return;
     }
@@ -120,7 +121,7 @@ export default function NewInvoicePage() {
     if (existingItemIndex > -1) {
        // Update quantity if product exists
        const updatedItems = [...invoiceItems];
-       const newQuantity = updatedItems[existingItemIndex].quantity + currentItemQuantity;
+       const newQuantity = updatedItems[existingItemIndex].quantity + quantity;
 
        if (product.quantity < newQuantity) {
           toast({ variant: 'destructive', title: 'Stock Insuficiente', description: `No puedes añadir más. Solo quedan ${product.quantity} unidades en total.` });
@@ -135,9 +136,9 @@ export default function NewInvoicePage() {
       const newItem: InvoiceItem = {
         productId: product.id,
         description: product.description,
-        quantity: currentItemQuantity,
+        quantity: quantity,
         price: product.sellingPrice,
-        subtotal: currentItemQuantity * product.sellingPrice,
+        subtotal: quantity * product.sellingPrice,
       };
       setInvoiceItems(prev => [...prev, newItem]);
     }
@@ -300,7 +301,17 @@ export default function NewInvoicePage() {
                                 type="number" 
                                 min="1" 
                                 value={currentItemQuantity} 
-                                onChange={(e) => setCurrentItemQuantity(parseInt(e.target.value, 10))} 
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  if (value === '') {
+                                    setCurrentItemQuantity('');
+                                  } else {
+                                    const numValue = parseInt(value, 10);
+                                    if (!isNaN(numValue)) {
+                                      setCurrentItemQuantity(numValue);
+                                    }
+                                  }
+                                }} 
                                 className="w-full sm:w-24"
                                 disabled={isSubmitting}
                             />
