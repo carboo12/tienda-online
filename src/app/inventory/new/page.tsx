@@ -103,8 +103,7 @@ export default function NewProductPage() {
         createdAt: new Date(),
       };
 
-      const isSuperUser = user?.name === 'admin' || user?.role === 'Superusuario';
-      if (!isSuperUser && user?.storeId) {
+      if (user && user.storeId) {
           productData.storeId = user.storeId;
       }
 

@@ -43,12 +43,18 @@ export default function InvoicesPage() {
     const db = getFirestore(app);
     let q;
 
-    const isSuperUser = user?.name === 'admin' || user?.role === 'Superusuario';
+    if (!user) {
+        setIsLoading(false);
+        return;
+    }
+
+    const isSuperUser = user.name === 'admin' || user.role === 'Superusuario';
     if (isSuperUser) {
       q = query(collection(db, 'invoices'), orderBy('createdAt', 'desc'));
-    } else if (user?.storeId) {
+    } else if (user.storeId) {
       q = query(collection(db, 'invoices'), where('storeId', '==', user.storeId), orderBy('createdAt', 'desc'));
     } else {
+      setInvoices([]);
       setIsLoading(false);
       return;
     }

@@ -51,19 +51,23 @@ export default function InventoryPage() {
 
 
    useEffect(() => {
-    if (!app) return;
+    if (!app || !user) {
+        setIsDataLoading(false);
+        return;
+    };
     
     const db = getFirestore(app);
     let q;
     
-    const isSuperUser = user?.name === 'admin' || user?.role === 'Superusuario';
+    const isSuperUser = user.name === 'admin' || user.role === 'Superusuario';
     if (isSuperUser) {
         q = query(collection(db, 'products'));
-    } else if (user?.storeId) {
+    } else if (user.storeId) {
         q = query(collection(db, 'products'), where('storeId', '==', user.storeId));
     } else {
+        setProducts([]);
         setIsDataLoading(false);
-        return; // No data to fetch
+        return;
     }
 
     setIsDataLoading(true);

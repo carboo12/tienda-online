@@ -48,14 +48,21 @@ export default function ClientsPage() {
     const db = getFirestore(app);
     let q;
 
-    const isSuperUser = user?.name === 'admin' || user?.role === 'Superusuario';
+    if (!user) {
+        setIsDataLoading(false);
+        return;
+    }
+
+    const isSuperUser = user.name === 'admin' || user.role === 'Superusuario';
     if (isSuperUser) {
       q = query(collection(db, 'clients'));
-    } else if (user?.storeId) {
+    } else if (user.storeId) {
       q = query(collection(db, 'clients'), where('storeId', '==', user.storeId));
     } else {
+      // User is not a superuser and has no storeId, show no clients.
+      setClients([]);
       setIsDataLoading(false);
-      return; // No query if user is not superuser and has no storeId
+      return;
     }
 
     setIsDataLoading(true);
