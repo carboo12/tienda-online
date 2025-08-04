@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, DollarSign } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,6 +18,9 @@ import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 
 // Mock data, in a real app this would come from state management or an API
 const initialSettings = {
+    general: {
+      exchangeRate: 1.0,
+    },
     printer: {
       printerName: 'EPSON TM-T20II',
       font: 'Courier New',
@@ -128,11 +131,45 @@ export default function SettingsPage() {
                     </Button>
                 </div>
                 
-                <Tabs defaultValue="printer">
-                    <TabsList className="grid w-full grid-cols-2 max-w-md">
+                <Tabs defaultValue="general">
+                    <TabsList className="grid w-full grid-cols-3 max-w-lg">
+                        <TabsTrigger value="general">General</TabsTrigger>
                         <TabsTrigger value="printer">Impresora</TabsTrigger>
                         <TabsTrigger value="ticket">Ticket de Venta</TabsTrigger>
                     </TabsList>
+
+                    <TabsContent value="general" className="mt-4">
+                        <Card>
+                             <CardHeader>
+                                <CardTitle>Ajustes Generales</CardTitle>
+                                <CardDescription>
+                                    Configuraciones globales que afectan a toda la aplicación.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                               <Card>
+                                  <CardHeader>
+                                    <CardTitle className="text-lg flex items-center gap-2"><DollarSign/>Tasa de Cambio</CardTitle>
+                                    <CardDescription>
+                                      Define el valor de 1 Dólar Americano (USD) en tu moneda local.
+                                    </CardDescription>
+                                  </CardHeader>
+                                  <CardContent>
+                                     <div className="space-y-2 max-w-xs">
+                                        <Label htmlFor="exchangeRate">1 USD equivale a:</Label>
+                                        <Input 
+                                            id="exchangeRate" 
+                                            type="number"
+                                            value={settings.general.exchangeRate}
+                                            onChange={(e) => setSettings(s => ({...s, general: { ...s.general, exchangeRate: parseFloat(e.target.value) || 0 }}))}
+                                            placeholder="Ej: 36.50"
+                                        />
+                                    </div>
+                                  </CardContent>
+                               </Card>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
 
                     <TabsContent value="printer" className="mt-4">
                         <Card>
