@@ -68,10 +68,10 @@ export function UserNav() {
           orderBy('createdAt', 'desc')
       );
     } else {
+      // Query without orderBy to prevent needing a composite index, we will sort on the client
       q = query(
           collection(db, 'notifications'), 
-          where('storeId', '==', user.storeId),
-          orderBy('createdAt', 'desc')
+          where('storeId', '==', user.storeId)
       );
     }
     
@@ -81,6 +81,12 @@ export function UserNav() {
             ...doc.data(),
             createdAt: doc.data().createdAt.toDate()
         } as Notification));
+
+        // If not super user, sort client-side
+        if (!isSuperUser) {
+            notifs.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        }
+
         setNotifications(notifs);
         setUnreadCount(notifs.filter(n => !n.isRead).length);
     }, (error) => {
