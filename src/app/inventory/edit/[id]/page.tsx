@@ -77,12 +77,12 @@ export default function EditProductPage() {
         const productSnap = await getDoc(productRef);
         if (productSnap.exists()) {
             const data = productSnap.data() as ProductData;
-            setDescription(data.description);
-            setProductType(data.productType);
-            setQuantity(data.quantity.toString());
-            setCostPrice(data.costPrice.toString());
-            setSellingPrice(data.sellingPrice.toString());
-            setMinimumStock(data.minimumStock.toString());
+            setDescription(data.description || '');
+            setProductType(data.productType || '');
+            setQuantity(data.quantity?.toString() || '0');
+            setCostPrice(data.costPrice?.toString() || '0');
+            setSellingPrice(data.sellingPrice?.toString() || '0');
+            setMinimumStock(data.minimumStock?.toString() || '0');
             setDepartmentId(data.departmentId || 'none');
         } else {
             toast({ variant: 'destructive', title: 'Error', description: 'Producto no encontrado.' });

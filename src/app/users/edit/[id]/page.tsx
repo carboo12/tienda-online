@@ -77,10 +77,10 @@ export default function EditUserPage() {
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
             const data = userSnap.data() as UserData;
-            setUsername(data.username);
-            setName(data.name);
-            setEmail(data.email);
-            setRole(data.role);
+            setUsername(data.username || '');
+            setName(data.name || '');
+            setEmail(data.email || '');
+            setRole(data.role || '');
             setStoreId(data.storeId || 'unassigned');
             // Do not set password for security reasons, only allow updating it
         } else {

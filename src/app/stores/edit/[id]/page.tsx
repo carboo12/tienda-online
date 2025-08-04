@@ -64,11 +64,11 @@ export default function EditStorePage() {
 
             if (storeSnap.exists()) {
                 const data = storeSnap.data() as StoreData;
-                setStoreName(data.name);
-                setOwnerName(data.owner);
-                setPhone(data.phone);
+                setStoreName(data.name || '');
+                setOwnerName(data.owner || '');
+                setPhone(data.phone || '');
                 setEmail(data.email || '');
-                setLicenseExpires(data.licenseExpires.toDate());
+                setLicenseExpires(data.licenseExpires?.toDate());
             } else {
                 toast({ variant: 'destructive', title: 'Error', description: 'Tienda no encontrada.' });
                 router.push('/stores');

@@ -66,12 +66,12 @@ export default function EditClientPage() {
 
             if (clientSnap.exists()) {
                 const data = clientSnap.data() as ClientData;
-                setClientName(data.name);
-                setPhone(data.phone);
+                setClientName(data.name || '');
+                setPhone(data.phone || '');
                 setAddress(data.address || '');
-                setIdNumber(data.idNumber);
-                setBalance(data.balance.toString());
-                setCreditLimit(data.creditLimit.toString());
+                setIdNumber(data.idNumber || '');
+                setBalance(data.balance?.toString() || '0');
+                setCreditLimit(data.creditLimit?.toString() || '0');
                 if (data.location) {
                     setLatitude(data.location.latitude.toString());
                     setLongitude(data.location.longitude.toString());
