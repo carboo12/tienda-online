@@ -4,7 +4,7 @@
 import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { PlusCircle, Loader2 } from 'lucide-react';
+import { PlusCircle, Loader2, CreditCard, Coins } from 'lucide-react';
 import Link from 'next/link';
 import { getFirestore, collection, onSnapshot, query, orderBy, Timestamp } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { getApps, getApp, initializeApp } from 'firebase/app';
+import { cn } from '@/lib/utils';
 
 const firebaseConfig = {
   "projectId": "multishop-manager-3x6vw",
@@ -28,6 +29,7 @@ interface Invoice {
   createdAt: Date;
   total: number;
   status: string;
+  paymentMethod: 'credit' | 'cash';
 }
 
 export default function InvoicesPage() {
@@ -49,6 +51,7 @@ export default function InvoicesPage() {
           createdAt: (data.createdAt as Timestamp).toDate(),
           total: data.total,
           status: data.status,
+          paymentMethod: data.paymentMethod || 'credit',
         };
       });
       setInvoices(invoicesData);
@@ -107,7 +110,8 @@ export default function InvoicesPage() {
                     <TableHead>Factura ID</TableHead>
                     <TableHead>Cliente</TableHead>
                     <TableHead className="hidden sm:table-cell">Fecha</TableHead>
-                    <TableHead className="text-center">Estado</TableHead>
+                    <TableHead className="text-center hidden md:table-cell">Estado</TableHead>
+                    <TableHead className="text-center">Tipo Venta</TableHead>
                     <TableHead className="text-right">Total</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -117,8 +121,14 @@ export default function InvoicesPage() {
                       <TableCell className="font-mono text-xs">...{invoice.id.slice(-6)}</TableCell>
                       <TableCell className="font-medium">{invoice.clientName}</TableCell>
                       <TableCell className="hidden sm:table-cell">{format(invoice.createdAt, "dd/MM/yyyy")}</TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="text-center hidden md:table-cell">
                         <Badge variant={getStatusVariant(invoice.status)}>{invoice.status}</Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline" className={cn(invoice.paymentMethod === 'cash' ? "border-green-500" : "border-sky-500")}>
+                           {invoice.paymentMethod === 'cash' ? <Coins className="mr-1" /> : <CreditCard className="mr-1" />}
+                           {invoice.paymentMethod === 'cash' ? 'Contado' : 'Crédito'}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right">C$ {invoice.total.toFixed(2)}</TableCell>
                     </TableRow>

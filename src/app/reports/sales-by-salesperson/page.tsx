@@ -52,13 +52,15 @@ export default function SalesBySalespersonReportPage() {
       invoicesSnapshot.forEach((doc) => {
         const invoice = doc.data();
         const salesperson = invoice.createdBy;
+        const total = invoice.total || 0;
+
         if (salesperson) {
           if (salesByPerson[salesperson]) {
-            salesByPerson[salesperson].totalSales += invoice.total;
+            salesByPerson[salesperson].totalSales += total;
             salesByPerson[salesperson].invoiceCount += 1;
           } else {
             salesByPerson[salesperson] = {
-              totalSales: invoice.total,
+              totalSales: total,
               invoiceCount: 1,
             };
           }

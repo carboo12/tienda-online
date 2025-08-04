@@ -11,11 +11,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { getFirestore, collection, getDocs, doc, runTransaction, Timestamp } from 'firebase/firestore';
-import { Loader2, PlusCircle, ArrowLeft, Trash2, XCircle } from 'lucide-react';
+import { Loader2, PlusCircle, ArrowLeft, Trash2, CreditCard, Coins } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getApps, getApp, initializeApp } from 'firebase/app';
 import { getCurrentUser } from '@/lib/auth';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const firebaseConfig = {
   "projectId": "multishop-manager-3x6vw",
@@ -49,6 +50,8 @@ interface InvoiceItem {
   subtotal: number;
 }
 
+type PaymentMethod = 'credit' | 'cash';
+
 export default function NewInvoicePage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -61,6 +64,7 @@ export default function NewInvoicePage() {
 
   // Form state
   const [selectedClientId, setSelectedClientId] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('credit');
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
   
   // State for adding a new item
@@ -180,9 +184,11 @@ export default function NewInvoicePage() {
             transaction.update(productRef, { quantity: newStock });
         }
         
-        // Update client balance
-        const newBalance = clientDoc.data().balance + invoiceTotal;
-        transaction.update(clientRef, { balance: newBalance });
+        // Update client balance ONLY if it's a credit sale
+        if (paymentMethod === 'credit') {
+            const newBalance = clientDoc.data().balance + invoiceTotal;
+            transaction.update(clientRef, { balance: newBalance });
+        }
 
         // Create invoice document
         const invoiceRef = doc(collection(db, 'invoices'));
@@ -191,7 +197,8 @@ export default function NewInvoicePage() {
             clientName: clientDoc.data().name,
             items: invoiceItems,
             total: invoiceTotal,
-            status: 'Pendiente',
+            paymentMethod: paymentMethod,
+            status: paymentMethod === 'credit' ? 'Pendiente' : 'Pagada',
             createdAt: Timestamp.now(),
             createdBy: user.name,
             creatorRole: user.name === 'admin' ? 'Administrador' : 'Vendedor'
@@ -228,19 +235,42 @@ export default function NewInvoicePage() {
               <CardDescription>Selecciona un cliente y añade productos para generar una factura.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="space-y-2">
-                    <Label htmlFor="client">Cliente</Label>
-                    <Select onValueChange={setSelectedClientId} value={selectedClientId} required disabled={isLoading || isSubmitting}>
-                        <SelectTrigger id="client">
-                            <SelectValue placeholder={isLoading ? "Cargando clientes..." : "Selecciona un cliente"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {clients.map(client => (
-                                <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <Label htmlFor="client">Cliente</Label>
+                        <Select onValueChange={setSelectedClientId} value={selectedClientId} required disabled={isLoading || isSubmitting}>
+                            <SelectTrigger id="client">
+                                <SelectValue placeholder={isLoading ? "Cargando clientes..." : "Selecciona un cliente"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {clients.map(client => (
+                                    <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Tipo de Venta</Label>
+                        <RadioGroup 
+                            value={paymentMethod}
+                            onValueChange={(value: PaymentMethod) => setPaymentMethod(value)}
+                            className="flex items-center space-x-4"
+                            disabled={isSubmitting}
+                        >
+                            <Label htmlFor="credit" className="flex items-center gap-2 p-3 rounded-md border has-[:checked]:bg-primary/10 has-[:checked]:border-primary cursor-pointer transition-colors">
+                                <RadioGroupItem value="credit" id="credit" />
+                                <CreditCard />
+                                Crédito
+                            </Label>
+                            <Label htmlFor="cash" className="flex items-center gap-2 p-3 rounded-md border has-[:checked]:bg-primary/10 has-[:checked]:border-primary cursor-pointer transition-colors">
+                                <RadioGroupItem value="cash" id="cash" />
+                                <Coins />
+                                Contado
+                            </Label>
+                        </RadioGroup>
+                    </div>
                 </div>
+
                 
                 {/* Add Product Section */}
                 <Card className="bg-muted/50">
@@ -308,11 +338,11 @@ export default function NewInvoicePage() {
                               <TableRow key={item.productId}>
                                 <TableCell className="font-medium">{item.description}</TableCell>
                                 <TableCell className="text-center">{item.quantity}</TableCell>
-                                <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
-                                <TableCell className="text-right">${item.subtotal.toFixed(2)}</TableCell>
+                                <TableCell className="text-right">C$ {item.price.toFixed(2)}</TableCell>
+                                <TableCell className="text-right">C$ {item.subtotal.toFixed(2)}</TableCell>
                                 <TableCell>
                                   <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.productId)} disabled={isSubmitting}>
-                                    <Trash2 className="text-destructive" />
+                                    <Trash2 className="h-4 w-4 text-destructive" />
                                   </Button>
                                 </TableCell>
                               </TableRow>
@@ -327,7 +357,7 @@ export default function NewInvoicePage() {
             <CardFooter className="flex flex-col items-end space-y-4 bg-muted/50 p-6">
                 <div className="flex justify-between w-full max-w-xs text-lg font-bold">
                     <span>Total:</span>
-                    <span>${invoiceTotal.toFixed(2)}</span>
+                    <span>C$ {invoiceTotal.toFixed(2)}</span>
                 </div>
                  <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting || isLoading || invoiceItems.length === 0}>
                     {isSubmitting ? <Loader2 className="animate-spin" /> : <PlusCircle />}

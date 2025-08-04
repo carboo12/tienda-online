@@ -54,16 +54,19 @@ export default function ClientHistoryReportPage() {
         const invoice = doc.data();
         const clientId = invoice.clientId;
         const clientName = invoice.clientName;
+        const total = invoice.total || 0;
 
-        if (clientData[clientId]) {
-          clientData[clientId].totalSpent += invoice.total;
-          clientData[clientId].invoiceCount += 1;
-        } else {
-          clientData[clientId] = {
-            name: clientName,
-            totalSpent: invoice.total,
-            invoiceCount: 1,
-          };
+        if (clientId) {
+            if (clientData[clientId]) {
+                clientData[clientId].totalSpent += total;
+                clientData[clientId].invoiceCount += 1;
+            } else {
+                clientData[clientId] = {
+                    name: clientName,
+                    totalSpent: total,
+                    invoiceCount: 1,
+                };
+            }
         }
       });
       

@@ -54,13 +54,15 @@ export default function BestSellingProductsReportPage() {
         const invoice = doc.data();
         if (invoice.items && Array.isArray(invoice.items)) {
           invoice.items.forEach((item: any) => {
-            if (productQuantities[item.productId]) {
-              productQuantities[item.productId].totalQuantity += item.quantity;
-            } else {
-              productQuantities[item.productId] = {
-                description: item.description,
-                totalQuantity: item.quantity,
-              };
+            if (item.productId && item.quantity) {
+              if (productQuantities[item.productId]) {
+                productQuantities[item.productId].totalQuantity += item.quantity;
+              } else {
+                productQuantities[item.productId] = {
+                  description: item.description,
+                  totalQuantity: item.quantity,
+                };
+              }
             }
           });
         }
