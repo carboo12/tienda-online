@@ -12,18 +12,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuPortal,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger
 } from "@/components/ui/dropdown-menu"
-import { User, LogOut, Bell, CheckCheck } from "lucide-react"
+import { User, LogOut, Bell } from "lucide-react"
 import { logout, getCurrentUser, User as AuthUser } from "@/lib/auth";
 import { useRouter } from 'next/navigation';
-import { getFirestore, collection, query, where, onSnapshot, orderBy, writeBatch } from 'firebase/firestore';
+import { getFirestore, collection, query, where, onSnapshot, orderBy, writeBatch, doc } from 'firebase/firestore';
 import { getApps, getApp, initializeApp } from 'firebase/app';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import Link from 'next/link';
 
 const firebaseConfig = {
   "projectId": "multishop-manager-3x6vw",
@@ -39,6 +36,8 @@ interface Notification {
     message: string;
     createdAt: Date;
     isRead: boolean;
+    link?: string;
+    type?: string;
 }
 
 export function UserNav() {
@@ -52,15 +51,26 @@ export function UserNav() {
   }, []);
 
   useEffect(() => {
-    if (!user?.storeId) return;
+    if (!user?.storeId && user?.name?.toLowerCase() !== 'admin') return;
 
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     const db = getFirestore(app);
-    const q = query(
-        collection(db, 'notifications'), 
-        where('storeId', '==', user.storeId),
-        orderBy('createdAt', 'desc')
-    );
+    
+    let q;
+    if (user.name.toLowerCase() === 'admin') {
+      // Admin gets all notifications
+      q = query(
+          collection(db, 'notifications'), 
+          orderBy('createdAt', 'desc')
+      );
+    } else {
+      // Store admin gets only their store's notifications
+      q = query(
+          collection(db, 'notifications'), 
+          where('storeId', '==', user.storeId),
+          orderBy('createdAt', 'desc')
+      );
+    }
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const notifs = snapshot.docs.map(doc => ({
@@ -82,7 +92,7 @@ export function UserNav() {
   };
 
   const markAllAsRead = async () => {
-    if (!user?.storeId || unreadCount === 0) return;
+    if (unreadCount === 0) return;
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     const db = getFirestore(app);
     const batch = writeBatch(db);
@@ -101,16 +111,20 @@ export function UserNav() {
 
   const isSuperUser = user.name.toLowerCase() === 'admin';
   const isStoreAdmin = user.role === 'Administrador de Tienda';
+  const canViewNotifications = isSuperUser || isStoreAdmin;
 
   return (
     <div className="flex items-center gap-2">
-        {isStoreAdmin && (
+        {canViewNotifications && (
             <DropdownMenu onOpenChange={(open) => { if(open && unreadCount > 0) markAllAsRead() }}>
                  <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                        <Bell className="h-5 w-5" />
                        {unreadCount > 0 && (
-                           <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500" />
+                           <span className="absolute top-0 right-0 flex h-2.5 w-2.5 items-center justify-center">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                           </span>
                        )}
                     </Button>
                 </DropdownMenuTrigger>
@@ -119,11 +133,13 @@ export function UserNav() {
                     <DropdownMenuSeparator />
                      {notifications.length > 0 ? (
                         notifications.map(notif => (
-                            <DropdownMenuItem key={notif.id} className="flex flex-col items-start gap-1 whitespace-normal">
-                                <p className="text-sm">{notif.message}</p>
-                                <p className="text-xs text-muted-foreground">
-                                    {formatDistanceToNow(notif.createdAt, { addSuffix: true, locale: es })}
-                                </p>
+                            <DropdownMenuItem key={notif.id} className="flex flex-col items-start gap-1 whitespace-normal" asChild>
+                               <Link href={notif.link || '#'}>
+                                  <p className="text-sm">{notif.message}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                      {formatDistanceToNow(notif.createdAt, { addSuffix: true, locale: es })}
+                                  </p>
+                                </Link>
                             </DropdownMenuItem>
                         ))
                     ) : (

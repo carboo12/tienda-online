@@ -102,17 +102,17 @@ export function PaymentDialog({ isOpen, onClose, client }: PaymentDialogProps) {
           createdAt: Timestamp.now(),
         });
         
-        // 3. Create a notification for the store admin
-        if (user.storeId) {
-            const notificationRef = doc(collection(db, 'notifications'));
-            const notificationMessage = `El usuario '${user.name}' registró un abono de C$ ${paymentAmount.toFixed(2)} para el cliente '${client.name}'.`;
-            transaction.set(notificationRef, {
-                message: notificationMessage,
-                storeId: user.storeId,
-                isRead: false,
-                createdAt: Timestamp.now(),
-            });
-        }
+        // 3. Create a notification for the store admin or general admin
+        const notificationRef = doc(collection(db, 'notifications'));
+        const notificationMessage = `Abono de C$ ${paymentAmount.toFixed(2)} registrado para ${client.name} por ${user.name}.`;
+        transaction.set(notificationRef, {
+            message: notificationMessage,
+            storeId: user.storeId || null, // Associates with a store, or null for general admin
+            isRead: false,
+            createdAt: Timestamp.now(),
+            type: 'PAYMENT_RECEIVED',
+            link: `/clients/edit/${client.id}`
+        });
       });
 
       toast({
